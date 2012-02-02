@@ -21,10 +21,19 @@ self.onmessage = function(msg) {
         var thisVar = cesspoolOfVariables[whichVariableIsBeingChanged(allTheLines[i])];
 
         if ( thisVar ){
+          var wholeContextUpToNow = "";
+          for ( var j = 0; j <= i; j++ )
+          {
+            wholeContextUpToNow += allTheLines[j] + ";\n";
+
+          }
+
+
+
           // first thing: to eval, we need to introduce the variable in the context with the prev. value
           // second thing: if this was added as a tentacle, then the value of this var isn't a number
           // it's the name of a different var. so we need to trace back to the value of that var
-          var fakeInitializeString = thisVar.name + "=" + thisVar.current + ";";
+          /*var fakeInitializeString = thisVar.name + "=" + thisVar.current + ";";
 
           if ( isVarATentacle(thisVar.current))
           {
@@ -32,10 +41,19 @@ self.onmessage = function(msg) {
             fakeInitializeString = thisVar.current + "=" + findTentacleValue(thisVar.current)
                       + "; " + fakeInitializeString;
           }
+          */
 
-          var amazingEvalString = fakeInitializeString + allTheLines[i];
-          eval(amazingEvalString);
-          var amazingEvalResult = eval(thisVar.name);
+          //var amazingEvalString = wholeConten//fakeInitializeString + allTheLines[i];
+          //eval(amazingEvalString);
+          //alert(wholeContextUpToNow);
+          try {
+            eval(wholeContextUpToNow);
+            var amazingEvalResult = eval(thisVar.name);
+
+          }
+          catch (e) {}
+
+
 
           // reassign it to the map
           thisVar.previous = thisVar.current;
@@ -62,20 +80,20 @@ self.onmessage = function(msg) {
         codeLine.indexOf("-=") != -1 ||
         codeLine.indexOf("++") != -1 ||
         codeLine.indexOf("--") != -1 ||
-        codeLine.indexOf("*=") != -1);
+        codeLine.indexOf("*=") != -1 ||
+        codeLine.indexOf("=") != -1 );
   }
   function whichVariableIsBeingChanged(codeLine){
     // hurrah for hideous code!
-    if (codeLine.indexOf("+=") != -1)
-      return codeLine.split("+=")[0].trim();
-    if (codeLine.indexOf("-=") != -1)
-      return codeLine.split("-=")[0].trim();
-    if (codeLine.indexOf("++") != -1)
-      return codeLine.split("++")[0].trim();
-    if (codeLine.indexOf("--") != -1)
-      return codeLine.split("--")[0].trim();
-    if (codeLine.indexOf("*=") != -1)
-      return codeLine.split("*=")[0].trim();
+    var operators = ['+=', '-=', '++', '--', '*=', '/=', '='];
+    var operator, i, cunt = operators.length;
+
+    for (i = 0; i < cunt; i++) {
+      operator = operators[i];
+      if (codeLine.indexOf(operator) !== -1)
+        return codeLine.split(operator)[0].trim()
+    }
+
     return "";
   }
 

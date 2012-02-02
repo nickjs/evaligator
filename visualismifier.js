@@ -15,7 +15,13 @@
 
   editor.getSession().on('change', function(e) {
     var text = editor.getSession().getDocument().getValue();
-    worker.postMessage(text);
+    // worker.postMessage(text);
+    var tree = Parser.Parser.parse(text);
+    var result = {source: ''}
+    walkTheTreeBitches(tree, result);
+
+    console.log(result);
+    split.getEditor(1).getSession().setValue(result.source);
   });
 
   worker.onmessage = function(msg) {
@@ -24,6 +30,49 @@
 
   window.onresize = function() {
     split.resize();
+  }
+
+  var nicksPoorlyNamedMap = {
+    'VariableDeclaration': printAssignment,
+    'ForStatement': printLoop
+  };
+
+  function walkTheTreeBitches(tree, source)
+  {
+    var children = tree.children;
+    if (!children) return;
+
+    var count = children.length, i, child;
+    for (i = 0; i < count; i++)
+    {
+        child = children[i];
+        if (child.name in nicksPoorlyNamedMap)
+          nicksPoorlyNamedMap[child.name](child, source);
+
+        walkTheTreeBitches(children[i], source);
+    }
+  }
+
+  function printAssignment(node, source)
+  {
+    var identifier = findNodesChildWithName(node, 'Identifier');
+    source.source += ' ' + identifier + ' = ' + new Function(node.source + ';return ' + identifier + ';')() + '\n';
+  }
+
+  function printLoop()
+  {
+
+  }
+
+  function findNodesChildWithName(node, name)
+  {
+    var children = node.children, count = children.length, child;
+    for (var i = 0; i < count; i++)
+    {
+      child = children[i];
+      if (child.name === name)
+        return node.source.substr(child.range.location, child.range.length);
+    }
   }
 
 })()
