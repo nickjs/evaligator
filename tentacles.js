@@ -2,6 +2,8 @@ self.onmessage = function(msg) {
   var cesspoolOfVariables = {}; // all the introduced variables and their current and previous values
   var result = '';
 
+  // hi, i am a test comment and i should be removed in the future.
+  
   var allTheCode = msg.data;
   if (allTheCode){
     var allTheLines = allTheCode.split("\n")
