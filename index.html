@@ -33,9 +33,30 @@
   <script src="tentacleporn.coffee" type="text/coffeescript"></script>
 
   <script type="text/coffeescript">
-    EditorView.initialize()
-    Editor = new EditorView document.getElementById('editor')
-  </script>
+    class EditorView
+      EditSession = require('ace/edit_session').EditSession
+      UndoManager = require('ace/undomanager').UndoManager
+      Split = require('ace/split').Split
+
+      constructor: (node) ->
+        @theme = require('ace/theme-twilight')
+
+        @split = new Split node, @theme, 2
+        # @split.getEditor(1).setReadOnly yes
+
+        @editor = @split.getEditor(0)
+        @editor.focus()
+
+        window.addEventListener 'resize', ->
+          @split.resize()
+
+        @editor.getSession().on 'change', =>
+          theHopefullyNotArbitraryTextThatWasTyped = @editor.getSession().getDocument().getValue()
+
+          # @split.getEditor(1).getSession().setValue hoomanizedTexties
+
+    window.Editor = new EditorView document.getElementById('editor')
+</script>
 
 </body>
 </html>
