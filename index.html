@@ -42,7 +42,7 @@
         @theme = require('ace/theme-twilight')
 
         @split = new Split node, @theme, 2
-        # @split.getEditor(1).setReadOnly yes
+        @split.getEditor(1).setReadOnly yes
 
         @editor = @split.getEditor(0)
         @editor.focus()
