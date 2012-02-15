@@ -1,17 +1,23 @@
 class SourceCodeParser
   constructor: (@transmogrifier, @text) -> #this assigns params to members
+    transmogrifier.variableDeclaration 'foo'
+    transmogrifier.loopExpression 'anyVarThatNeedsToBeDisplayedOnTheForLineLikeTheIndexCounter'
+      # then recursively call SourceCodeParser() on the child of the for node
+    
     #if someNode is 'var'
     #  transmogrifier.variableDeclaration someNode.varName
-    #else if someNode is 'for' or 'while'
-    #  transmogrifier.loopExpression someNode.stuff
+    #else if someNode is 'for' or 'while' -> possibly display counter on this line
+    # then recursively call on child
+    #  transmogrifier.loopExpression someNode.stuff see above! 
     #else if someNode is 'if'
-    #  transmogrifier.ifExpression someNode.stuff
-    #else if someNode is 'function'
+    # recursively call on the child
+    # else if someNode is 'function' -> display the input params and call recursively on child
     #  transmogrifier.functionDeclaration someNode.parameters
+    
 
 class SourceTransmogrifier
   constructor: ->
-    @value = ''
+    @value = []
     @allTheInputParamsToTheFunction = {}
   
   transmogrify: (allTheTexts) ->
@@ -31,10 +37,10 @@ class HoomanTransmogrifier extends SourceTransmogrifier
   variableDeclaration: (theNameOfTheVariable) ->
     @value += "#{theNameOfTheVariable} = undefined"
   
-  functionDeclaration: (parameters) ->
+  functionDeclaration: (parameters, lineNumber) ->
     for param in parameters
       @allTheInputParamsToTheFunction[param] = undefined
-      @value += "#{param} = #{@allTheInputParamsToTheFunction[param]}\n"
+      @value[lineNumber] = "#{param} = #{@allTheInputParamsToTheFunction[param]}"
       
   loopExpression: ->
 # var i = 0;                    i = 0
