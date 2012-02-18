@@ -58,7 +58,7 @@
           codeParser = new SourceCodeParser(codeToHoomanDoer)
           codeParser.parseThemSourceCodes(theHopefullyNotArbitraryTextThatWasTyped)
 
-         # @split.getEditor(1).getSession().setValue hoomanizedTexties
+          @split.getEditor(1).getSession().setValue codeToHoomanDoer.value
 
     window.Editor = new EditorView document.getElementById('editor')
 </script>
