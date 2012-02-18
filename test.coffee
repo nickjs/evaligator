@@ -1,3 +1,24 @@
+module "parsing stuffs",
+  setup: ->
+    @hooman = HoomanTransmogrifier.sharedInstance()
+    @monkey = new SourceCodeParser(@hooman)
+
+test "where's my var defs at, part 1", ->
+  result = @monkey.parseThemSourceCodes("var tuna")
+  equal result, "tuna"
+test "where's my var defs at, part 2", ->
+  result = @monkey.parseThemSourceCodes("var tuna = 3")
+  equal result, "tuna"
+test "where's my var defs at, part 3", ->
+  result = @monkey.parseThemSourceCodes("var var")
+  equal result, null
+test "where's my var defs at, part 4", ->
+  result = @monkey.parseThemSourceCodes("var")
+  equal result, null
+
+
+
+
 module "hooman stuffs",
   setup: ->
     @hooman = HoomanTransmogrifier.sharedInstance()

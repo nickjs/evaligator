@@ -1,7 +1,52 @@
 class SourceCodeParser
-  constructor: (@transmogrifier, @text) -> #this assigns params to members
-    transmogrifier.variableDeclaration 'foo'
-    transmogrifier.loopExpression 'anyVarThatNeedsToBeDisplayedOnTheForLineLikeTheIndexCounter'
+  constructor: (@transmogrifier) -> #this assigns params to members
+
+  parseThemSourceCodes: (text) ->
+    syntaxTree = Parser.Parser.parse(text);
+    @traverse(syntaxTree)
+    
+    
+  getElementIfAnyOfType: (node, nodeType) ->
+      if ( node.name == nodeType)
+        return node;
+
+      children = node.children
+
+      if (children == undefined)
+        return null
+
+      for childNode in children
+        # is this node of this type?
+        if (childNode.name == nodeType)
+          return childNode
+      
+        # if not, are any of the children nodes of this type?
+        possibleChildSourceElementNode = @getElementIfAnyOfType(childNode, nodeType)
+        if ( possibleChildSourceElementNode != null )
+          return possibleChildSourceElementNode   # hurrah
+
+      return null
+
+  traverse: (node) ->
+    varStatementNode = @getElementIfAnyOfType(node, "VariableStatement")
+    
+    if (varStatementNode != null)
+      # we have a variable statement/definition/initialization. find the culprit
+      identifierNameNode = @getElementIfAnyOfType(varStatementNode, "IdentifierName")
+
+      if (identifierNameNode != null)
+        identifierName = identifierNameNode.source.substr(identifierNameNode.range.location, identifierNameNode.range.length)
+        console.log("there's a variable statement for: " + identifierName )
+        return identifierName
+    else
+      console.log("found no variable statements")
+      return null
+
+    
+    # transmogrifier.variableDeclaration 'foo'
+    # transmogrifier.loopExpression 'anyVarThatNeedsToBeDisplayedOnTheForLineLikeTheIndexCounter'
+  
+
       # then recursively call SourceCodeParser() on the child of the for node
     
     #if someNode is 'var'
@@ -86,3 +131,4 @@ class EvaluatingTransmogrifier extends SourceTransmogrifier
 # export ALL the things
 window.HoomanTransmogrifier = HoomanTransmogrifier
 window.EvaluatingTransmogrifier = EvaluatingTransmogrifier
+window.SourceCodeParser = SourceCodeParser

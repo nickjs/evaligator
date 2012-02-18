@@ -53,7 +53,12 @@
         @editor.getSession().on 'change', =>
           theHopefullyNotArbitraryTextThatWasTyped = @editor.getSession().getDocument().getValue()
 
-          # @split.getEditor(1).getSession().setValue hoomanizedTexties
+          codeToHoomanDoer = HoomanTransmogrifier.sharedInstance()
+          
+          codeParser = new SourceCodeParser(codeToHoomanDoer)
+          codeParser.parseThemSourceCodes(theHopefullyNotArbitraryTextThatWasTyped)
+
+         # @split.getEditor(1).getSession().setValue hoomanizedTexties
 
     window.Editor = new EditorView document.getElementById('editor')
 </script>
