@@ -20,12 +20,16 @@ test "where's my var defs at, part 4", ->
   equal @hooman.value, ""
 
 test "where's my var defs at, part 5", ->
-  @monkey.parseThemSourceCodes("var x;\nvar y;")
-  equal @hooman.value, "x = undefined\ny = undefined\n"
+  @monkey.parseThemSourceCodes("var tuna;\nvar fish;")
+  equal @hooman.value, "tuna = undefined\nfish = undefined\n"
 
 test "where's my var defs at, part 6", ->
-  @monkey.parseThemSourceCodes("var x; var y;")
-  equal @hooman.value, "x = undefined\ny = undefined\n"
+  @monkey.parseThemSourceCodes("var tuna; var fish;")
+  equal @hooman.value, "tuna = undefined\nfish = undefined\n"
+
+test "where's my var defs at, part 7", ->
+  @monkey.parseThemSourceCodes("var tuna, fish;")
+  equal @hooman.value, "tuna = undefined\nfish = undefined\n"
 
 module "hooman stuffs",
   setup: ->
