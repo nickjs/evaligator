@@ -2,8 +2,13 @@ class SourceCodeParser
   constructor: (@transmogrifier) -> #this assigns params to members
 
   parseThemSourceCodes: (text) ->
-    syntaxTree = Parser.Parser.parse(text);
-    @traverse(syntaxTree)
+    @transmogrifier.takeForgetMeNow()
+
+    allTheCodeLines = text.split "\n"
+    
+    for line in allTheCodeLines
+      syntaxTreeForThisLine = Parser.Parser.parse(line);
+      @traverse(syntaxTreeForThisLine)
     
     
   getElementIfAnyOfType: (node, nodeType) ->
@@ -37,11 +42,7 @@ class SourceCodeParser
       if (identifierNameNode != null)
         identifierName = identifierNameNode.source.substr(identifierNameNode.range.location, identifierNameNode.range.length)
         console.log("there's a variable statement for: " + identifierName )
-        return identifierName
-    else
-      console.log("found no variable statements")
-      return null
-
+        @transmogrifier.variableDeclaration identifierName
     
     # transmogrifier.variableDeclaration 'foo'
     # transmogrifier.loopExpression 'anyVarThatNeedsToBeDisplayedOnTheForLineLikeTheIndexCounter'
@@ -79,8 +80,11 @@ class HoomanTransmogrifier extends SourceTransmogrifier
 
     singletonInstance   # monica: this means "return singletonInstance"
 
+  takeForgetMeNow: ->
+    @value = ""
+
   variableDeclaration: (theNameOfTheVariable) ->
-    @value += "#{theNameOfTheVariable} = undefined"
+    @value += "#{theNameOfTheVariable} = undefined" + "\n"
   
   functionDeclaration: (parameters, lineNumber) ->
     for param in parameters

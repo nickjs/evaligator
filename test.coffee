@@ -4,20 +4,28 @@ module "parsing stuffs",
     @monkey = new SourceCodeParser(@hooman)
 
 test "where's my var defs at, part 1", ->
-  result = @monkey.parseThemSourceCodes("var tuna")
-  equal result, "tuna"
+  @monkey.parseThemSourceCodes("var tuna")
+  equal @hooman.value, "tuna = undefined\n"
+
 test "where's my var defs at, part 2", ->
-  result = @monkey.parseThemSourceCodes("var tuna = 3")
-  equal result, "tuna"
+  @monkey.parseThemSourceCodes("var tuna = 3")
+  equal @hooman.value, "tuna = undefined\n"
+
 test "where's my var defs at, part 3", ->
-  result = @monkey.parseThemSourceCodes("var var")
-  equal result, null
+  @monkey.parseThemSourceCodes("var var")
+  equal @hooman.value, ""
+
 test "where's my var defs at, part 4", ->
-  result = @monkey.parseThemSourceCodes("var")
-  equal result, null
+  @monkey.parseThemSourceCodes("var")
+  equal @hooman.value, ""
 
+test "where's my var defs at, part 5", ->
+  @monkey.parseThemSourceCodes("var x;\nvar y;")
+  equal @hooman.value, "x = undefined\ny = undefined\n"
 
-
+test "where's my var defs at, part 6", ->
+  @monkey.parseThemSourceCodes("var x; var y;")
+  equal @hooman.value, "x = undefined\ny = undefined\n"
 
 module "hooman stuffs",
   setup: ->
