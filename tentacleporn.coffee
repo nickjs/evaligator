@@ -5,75 +5,67 @@ class SourceCodeParser
     @transmogrifier.takeForgetMeNow()
 
     allTheCodeLines = text.split "\n"
-    
+
     for line in allTheCodeLines
-      syntaxTreeForThisLine = Parser.Parser.parse(line);
-      @traverse(syntaxTreeForThisLine)
-    
-    
+      syntaxTreeForThisLine = Parser.Parser.parse line
+      @traverse syntaxTreeForThisLine
+
   getElementIfAnyOfType: (node, nodeType) ->
-      if ( node.name == nodeType)
-        return node;
+      return node if node.name is nodeType
 
       children = node.children
-
-      if (children == undefined)
-        return null
+      return unless children
 
       for childNode in children
         # is this node of this type?
-        if (childNode.name == nodeType)
-          return childNode
-      
-        # if not, are any of the children nodes of this type?
-        possibleChildSourceElementNode = @getElementIfAnyOfType(childNode, nodeType)
-        if ( possibleChildSourceElementNode != null )
-          return possibleChildSourceElementNode   # hurrah
+        return childNode if childNode.name is nodeType
 
-      return null
+        # if not, are any of the children nodes of this type?
+        possibleChildSourceElementNode = @getElementIfAnyOfType childNode, nodeType
+        return possibleChildSourceElementNode if possibleChildSourceElementNode   # hurrah
 
   traverse: (node) ->
-    varStatementNode = @getElementIfAnyOfType(node, "VariableStatement")
-    
-    if (varStatementNode != null)
-      # we have a variable statement/definition/initialization. find the culprit
-      identifierNameNode = @getElementIfAnyOfType(varStatementNode, "IdentifierName")
+    varStatementNode = @getElementIfAnyOfType node, "VariableStatement"
 
-      if (identifierNameNode != null)
+    if varStatementNode
+      # we have a variable statement/definition/initialization. find the culprit
+      identifierNameNode = @getElementIfAnyOfType varStatementNode, "IdentifierName"
+
+      if identifierNameNode
         identifierName = identifierNameNode.source.substr(identifierNameNode.range.location, identifierNameNode.range.length)
-        console.log("there's a variable statement for: " + identifierName )
+        console.log "there's a variable statement for: #{identifierName}"
         @transmogrifier.variableDeclaration identifierName
-    
+
     # transmogrifier.variableDeclaration 'foo'
     # transmogrifier.loopExpression 'anyVarThatNeedsToBeDisplayedOnTheForLineLikeTheIndexCounter'
-  
+
 
       # then recursively call SourceCodeParser() on the child of the for node
-    
+
     #if someNode is 'var'
     #  transmogrifier.variableDeclaration someNode.varName
     #else if someNode is 'for' or 'while' -> possibly display counter on this line
     # then recursively call on child
-    #  transmogrifier.loopExpression someNode.stuff see above! 
+    #  transmogrifier.loopExpression someNode.stuff see above!
     #else if someNode is 'if'
     # recursively call on the child
     # else if someNode is 'function' -> display the input params and call recursively on child
     #  transmogrifier.functionDeclaration someNode.parameters
-    
+
 
 class SourceTransmogrifier
   constructor: ->
     @value = []
     @allTheInputParamsToTheFunction = {}
-  
+
   transmogrify: (allTheTexts) ->
     new SourceCodeParser @, allTheTexts
-    
+
 # decides what the editor should display, but doesn't evaluate
 class HoomanTransmogrifier extends SourceTransmogrifier
   # this is also singleton. heyooo
   singletonInstance = null
-   
+
   @sharedInstance: ->
     if not singletonInstance
       singletonInstance = new @ # monica: this means this
@@ -85,12 +77,12 @@ class HoomanTransmogrifier extends SourceTransmogrifier
 
   variableDeclaration: (theNameOfTheVariable) ->
     @value += "#{theNameOfTheVariable} = undefined" + "\n"
-  
+
   functionDeclaration: (parameters, lineNumber) ->
     for param in parameters
       @allTheInputParamsToTheFunction[param] = undefined
       @value[lineNumber] = "#{param} = #{@allTheInputParamsToTheFunction[param]}"
-      
+
   loopExpression: ->
 # var i = 0;                    i = 0
 # for (; i < 10; i++)           i = 0 | 1 | 2 | 3 | 4
@@ -107,7 +99,7 @@ class HoomanTransmogrifier extends SourceTransmogrifier
 #  a = 5                       a = 5
 # or
 # if ( a > 0 )
-#  a = 5                       
+#  a = 5
 # else
 #  a = -5                      a = -5
 
@@ -118,13 +110,13 @@ class HoomanTransmogrifier extends SourceTransmogrifier
       'f'
 
   onEdit: ->
-    
+
 
 # actually evaluates all the things
 class EvaluatingTransmogrifier extends SourceTransmogrifier
   # this is a singleton. heyooo
   singletonInstance = null
-  
+
   @sharedInstance: ->
     if not singletonInstance
       singletonInstance = new @
