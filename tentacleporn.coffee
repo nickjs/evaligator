@@ -62,7 +62,6 @@ class SourceCodeParser
 
     return paramNames
 
-
   transmogrifyNode: (node) ->
     if node.name is "VariableStatement"
       console.log "there's a variable statement"
@@ -74,18 +73,10 @@ class SourceCodeParser
     # monica also apologizes for the code sins that follow and promises to fix them tomorrow  
     else if node.name is "ForStatement"
       console.log "found a for loop"
-
+      # we're looking either in the first  or second ; chunk of the for loop 
       firstExpressionNodes = @getElementsIfAnyOfType(node, "ForFirstExpression") || @getElementsIfAnyOfType(node, "Expression")
       expressionNode = firstExpressionNodes?[0]
-      ###
-      if (firstExpressionNodes)
-        expressionNode = firstExpressionNodes[0]
-      else
-        firstAssignmentNodes = @getElementsIfAnyOfType node, "Expression"
-        if (firstAssignmentNodes)
-          expressionNode = firstAssignmentNodes[0]
-      ###
-
+  
       identifierNames = @getIdentifierNamesForStatement expressionNode
       for identifierName in identifierNames || []
         @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
