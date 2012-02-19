@@ -89,7 +89,9 @@ class SourceCodeParser
     #  transmogrifier.functionDeclaration someNode.parameters
 
   displayValue: ->
-    @variableMap.displayValue()
+    winningVariableMap.displayValue()
+
+winningVariableMap = null
 
 class VariableMapper
   constructor: ->
@@ -139,6 +141,7 @@ class SourceTransmogrifier
     # console.log @source.join("\n")
     try
       new Function("__VARIABLE_MAP__", "try{#{@source.join("\n")}}catch(e){}")(@variableMap)
+      winningVariableMap = @variableMap
 
   variableAssignment: (lineNumber, variableName) ->
     @source[lineNumber] += ";__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
