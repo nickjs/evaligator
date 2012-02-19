@@ -28,6 +28,7 @@
   <div id="editor"></div>
   <!-- <div id="visualismifier"></div> -->
   <script src="ace/ace.js" type="text/javascript"></script>
+  <script src="ace/theme-monokai-uncompressed.js" type="text/javascript"></script>
   <script src="lib/parser.js" type="text/javascript"></script>
   <script src="lib/coffee-script.js" type="text/javascript"></script>
   <script src="tentacleporn.coffee" type="text/coffeescript"></script>
@@ -37,11 +38,16 @@
       EditSession = require('ace/edit_session').EditSession
       UndoManager = require('ace/undomanager').UndoManager
       Split = require('ace/split').Split
+      Mode = require('ace/mode/javascript').Mode
 
       constructor: (node) ->
-        @theme = require('ace/theme-twilight')
+        @split = new Split node, require('ace/theme/monokai'), 2
 
-        @split = new Split node, @theme, 2
+        workerlessMode = new Mode
+        workerlessMode.createWorker = ->
+
+        @split.getEditor(0).getSession().setMode new Mode
+        @split.getEditor(1).getSession().setMode workerlessMode
         @split.getEditor(1).setReadOnly yes
 
         @editor = @split.getEditor(0)
