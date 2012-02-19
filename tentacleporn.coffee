@@ -106,11 +106,23 @@ class VariableMapper
 
   assignValue: (lineNumber, identifier, value) ->
     variable = @variableOnLineNumberWithName lineNumber, identifier
-    variable.value = value
+    variable.value = @makeTheValuePretty(value)
 
   iterateValue: (lineNumber, identifier, value) ->
     variable = @variableOnLineNumberWithName lineNumber, identifier
-    (variable.iterations ||= []).push value
+    (variable.iterations ||= []).push @makeTheValuePretty(value)
+
+  makeTheValuePretty: (value) ->
+    switch Object.prototype.toString.call(value).slice(8, -1)
+      when 'String' then "'#{value}'"
+      when 'Boolean' then value.toString().toUpperCase()
+      when 'Array'
+        innerValues = (@makeTheValuePretty(innerValue) for innerValue in value)
+        "[#{innerValues.join(', ')}]"
+      when 'Object'
+        innerValues = ("#{key}: #{@makeTheValuePretty(innerValue)}" for key, innerValue of value)
+        "{#{innerValues.join(', ')}}"
+      else value
 
   displayValue: ->
     result = for line in @allTheLines
