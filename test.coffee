@@ -37,6 +37,10 @@ test "where's my var defs at, part 7", ->
   @monkey.parseThemSourceCodes("var tuna, fish = 3;")
   equal @monkey.displayValue().trim(), "tuna = undefined ; fish = 3"
 
+test "where's my var defs at, part 8", ->
+  @monkey = new SourceCodeParser
+  @monkey.parseThemSourceCodes("var array = [1,3,4]; \nvar count = array.length")
+  equal @monkey.displayValue().trim(), "array = [1, 3, 4]\ncount = 3"
 
 test "for ALL the things, part 1", ->
   @monkey = new SourceCodeParser
@@ -47,6 +51,13 @@ test "for ALL the things, part 2", ->
   @monkey = new SourceCodeParser
   @monkey.parseThemSourceCodes("var i = 0; \nfor (; i < 3; i++ ) { \n}")
   equal @monkey.displayValue().trim(), "i = 0\ni = 0 | 1 | 2"
+
+test "for ALL the things, part 3", ->
+  @monkey = new SourceCodeParser
+  longCodeString = "var array = [1,3,'4']; \n"
+  longCodeString += "for (var i = 0, count = array.length; i < count; i++) { \n}"
+  @monkey.parseThemSourceCodes(longCodeString)
+  equal @monkey.displayValue().trim(), "array = [1, 3, '4']\ni = 0 | 1 | 2 ; count = 3 | 3 | 3"
 
 ###
 test "while ALL the things, part 1", ->

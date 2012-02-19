@@ -63,20 +63,43 @@ class SourceCodeParser
     return paramNames
 
   transmogrifyNode: (node) ->
-    if node.name is "VariableStatement"
+    if node.name is "VariableDeclaration"
       console.log "there's a variable statement"
+      # ok here's the thing. 
+      # for var a,b, we have 2 VariableDeclaration nodes in this node and each has an identifier
+      # for var a = b, we have 1 VariableDeclaration node, with two identifiers
+      # so for variableDeclaration, we only care about the first identifier.
       identifierNames = @getIdentifierNamesForStatement node
-      for identifierName in identifierNames || []
-        @transmogrifier.variableAssignment node.lineNumber, identifierName
+      @transmogrifier.variableAssignment node.lineNumber, identifierNames[0]
 
     # monica also apologizes for the code sins that follow and promises to fix them tomorrow
     else if node.name is "ForStatement"
       console.log "found a for loop"
       # we're looking either in the first  or second ; chunk of the for loop
-      firstExpressionNodes = @getElementsIfAnyOfType(node, "ForFirstExpression") || @getElementsIfAnyOfType(node, "Expression")
-      expressionNode = firstExpressionNodes?[0]
+      firstExpressionNodes = @getElementsIfAnyOfType(node, "ForFirstExpression")
 
-      identifierNames = @getIdentifierNamesForStatement expressionNode
+      # what follows is mega gross. 
+      if ( firstExpressionNodes )
+        # this has either VariableDeclarationNoIn nodes, or ExpressionNoIn nodes
+        # because the grammar is retarded these will have multiple identifiers (like in a = b)
+        # so for each of those *NoIn nodes, we only care about the first identifier
+
+        noInNodes = @getElementsIfAnyOfType(node, "AssignmentExpressionNoIn") || @getElementsIfAnyOfType(node, "ExpressionNoIn")
+  
+        identifierNames = (@getIdentifierNamesForStatement(n)?[0] for n in noInNodes)
+
+
+        noInNodes = @getElementsIfAnyOfType(node, "VariableDeclarationNoIn") ||  
+                          @getElementsIfAnyOfType(node, "ExpressionNoIn")
+        identifierNames = []
+        for n in noInNodes
+          nNames = @getIdentifierNamesForStatement n
+          identifierNames.push nNames[0]
+      else      
+        secondExpressionNodes = @getElementsIfAnyOfType(node, "Expression")
+        expressionNode = secondExpressionNodes?[0]
+        identifierNames = @getIdentifierNamesForStatement expressionNode
+     
       for identifierName in identifierNames || []
         @transmogrifier.iterationAssignment node.lineNumber, identifierName
 
