@@ -53,7 +53,7 @@ class SourceCodeParser
       if identifierNameNode
         identifierName = @getIdentifierNameFromNode identifierNameNode
         @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
-        # @transmogrifier.variableAssignment node.lineNumber, identifierName
+        @transmogrifier.iterationAssignment node.lineNumber, identifierName
 
     else if node.name is "FunctionDeclaration"
       console.log "found a function definition"
@@ -108,6 +108,10 @@ class VariableMapper
     variable = @variableOnLineNumberWithName lineNumber, identifier
     variable.value = value
 
+  iterateValue: (lineNumber, identifier, value) ->
+    variable = @variableOnLineNumberWithName lineNumber, identifier
+    (variable.iterations ||= []).push value
+
   displayValue: ->
     result = for line in @allTheLines
       if line
@@ -126,6 +130,9 @@ class SourceTransmogrifier
 
   variableAssignment: (lineNumber, variableName) ->
     @source[lineNumber] += ";__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
+
+  iterationAssignment: (lineNumber, variableName) ->
+    @source[lineNumber] += ";__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
 
 # export ALL the things
 window.SourceCodeParser = SourceCodeParser
