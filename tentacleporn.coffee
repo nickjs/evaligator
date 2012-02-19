@@ -1,95 +1,111 @@
 class SourceCodeParser
-  constructor: (@transmogrifier) -> #this assigns params to members
+  constructor: -> #this assigns params to members
 
   parseThemSourceCodes: (text) ->
-    entireSyntaxTree = Parser.Parser.parse text
-    @transmogrifier.setValueSize((text.split("\n")).length)
+    @variableMap = new VariableMapper
+    @transmogrifier = new SourceTransmogrifier text, @variableMap
 
+    entireSyntaxTree = Parser.Parser.parse text
     @traverseSyntaxNode entireSyntaxTree
 
+    @transmogrifier.run()
+
+
+  ###
+    SyntaxNode helper function
+  ###
+
+  # given a node, gives you back the variable in it
+  getIdentifierNameFromNode: (node) ->
+    return node.source.substr(node.range.location, node.range.length)
+
+  # gives you a list of nodes of nodeType
   getElementsIfAnyOfType: (node, nodeType) ->
     return node if node.name is nodeType
 
     nodeList = []
-    
+
     children = node.children
     return unless children
 
     for childNode in children
-      if childNode.name is nodeType 
+      if childNode.name is nodeType
         nodeList.push childNode
 
-      else  # if not, are any of the children nodes of this type?        
+      else  # if not, are any of the children nodes of this type?
         possibleChildSourceElementNode = @getElementsIfAnyOfType childNode, nodeType
         if possibleChildSourceElementNode && possibleChildSourceElementNode.length > 0
           nodeList = nodeList.concat possibleChildSourceElementNode
 
     return nodeList if nodeList?.length
-      
-  getParamNamesInFormalParamList: (node) -> 
-    children = node.children
-    return unless children
 
-    paramNames = []
-    for childNode in children
-      paramNames.push(@getIdentifierNameFromNode childNode) if childNode.name is "Identifier"
-
-    return paramNames
+  # gives you any variables in this parent
+  getIdentifierNamesForStatement: (node) ->
+    identifierNameNodes = @getElementsIfAnyOfType node, "Identifier"
+    identifierNames = @getNodeNamesFromNodeList(identifierNameNodes) if identifierNameNodes
 
   # monica is responsible for the copy paste but she is tired and gives zero fucks
-  getNodeNamesFromNodeList: (nodeList) -> 
+  getNodeNamesFromNodeList: (nodeList) ->
     paramNames = []
     for childNode in nodeList
       paramNames.push(@getIdentifierNameFromNode childNode) if childNode.name is "Identifier"
 
     return paramNames
 
-  getIdentifierNameFromNode: (node) ->
-    return node.source.substr(node.range.location, node.range.length) 
+  getParamNamesInFormalParamList: (node) ->
+    children = node.children
+    return unless children
 
-  hoomanTransmogrifyNode: (node) ->
+    paramNames = []
+    for childNode in children
+      paramNames.push(@getIdentifierNameFromNode childNode) if childNode.name is "Identifier"
+
+    return paramNames
+
+  transmogrifyNode: (node) ->
     if node.name is "VariableStatement"
-      # there may be multiple nodes of this kind on the same line. see var a, b
-      identifierNameNodes = @getElementsIfAnyOfType node, "Identifier"
-      if identifierNameNodes
-        identifierNames = @getNodeNamesFromNodeList identifierNameNodes
-        if identifierNames
-          @transmogrifier.variableDeclaration identifierNames, node.lineNumber
-      
-    # monica also apologizes for the code sins that follow and promises to fix them tomorrow  
+      console.log "there's a variable statement"
+      identifierNames = @getIdentifierNamesForStatement node
+      for identifierName in identifierNames || []
+        @transmogrifier.variableAssignment node.lineNumber, identifierName
+
+    # monica also apologizes for the code sins that follow and promises to fix them tomorrow
     else if node.name is "ForStatement"
-      debugger
-      firstExpressionNodes = @getElementsIfAnyOfType node, "ForFirstExpression"
+      console.log "found a for loop"
+      # we're looking either in the first  or second ; chunk of the for loop
+      firstExpressionNodes = @getElementsIfAnyOfType(node, "ForFirstExpression") || @getElementsIfAnyOfType(node, "Expression")
+      expressionNode = firstExpressionNodes?[0]
 
-      # i might not have a first expression, so then let's settle for the first assignment we find
-      if (firstExpressionNodes)
-        identifierNameNodes = @getElementsIfAnyOfType firstExpressionNodes[0], "Identifier"
-      else
-        firstAssignmentNodes = @getElementsIfAnyOfType node, "Expression"
-        if (firstAssignmentNodes)
-          identifierNameNodes = @getElementsIfAnyOfType firstAssignmentNodes[0], "Identifier"
+      identifierNames = @getIdentifierNamesForStatement expressionNode
+      for identifierName in identifierNames || []
+        @transmogrifier.iterationAssignment node.lineNumber, identifierName
 
-      if identifierNameNodes
-        identifierNames = @getNodeNamesFromNodeList identifierNameNodes
-        @transmogrifier.loopExpression identifierNames, node.lineNumber
-    
     else if node.name is "WhileStatement"
-      identifierNameNodes = @getElementsIfAnyOfType node, "Identifier"
-      if identifierNameNodes
-        identifierNames = @getNodeNamesFromNodeList identifierNameNodes
-        @transmogrifier.loopExpression identifierNames, node.lineNumber
-            
-    else if node.name is "FunctionDeclaration" or node.name is "FunctionExpression"
-      paramListNode = @getElementsIfAnyOfType node, "FormalParameterList"
+      console.log "found a while loop"
+      identifierNames = @getIdentifierNamesForStatement node
+      for identifierName in identifierNames || []
+        @transmogrifier.iterationAssignment node.lineNumber, identifierName
 
-      debugger
+    else if node.name is "FunctionDeclaration" or node.name is "FunctionExpression"
+      console.log "found a function definition"
+      paramListNode = @getElementsIfAnyOfType node, "FormalParameterList"
       if paramListNode
-        paramNames = @getParamNamesInFormalParamList paramListNode[0] 
+        paramNames = @getParamNamesInFormalParamList paramListNode[0]
         if paramNames
-          @transmogrifier.functionDeclaration paramNames, node.lineNumber
-     
+          for paramName in paramNames
+            @variableMap.variableOnLineNumberWithName node.lineNumber, paramName
+
+    else if node.name is "AssignmentExpression"
+      identifierNames = @getIdentifierNamesForStatement node
+      for identifierName in identifierNames || []
+        @transmogrifier.variableAssignment node.lineNumber, identifierName
+
+    else
+      return true
+
   traverseSyntaxNode: (node) ->
-    @hoomanTransmogrifyNode node;
+    parseChildren = @transmogrifyNode node
+    return if parseChildren isnt true
 
     children = node.children
     return unless children
@@ -102,92 +118,66 @@ class SourceCodeParser
     # else if someNode is 'function' -> display the input params and call recursively on child
     #  transmogrifier.functionDeclaration someNode.parameters
 
+  displayValue: ->
+    winningVariableMap.displayValue()
 
-class SourceTransmogrifier
+winningVariableMap = null
+
+class VariableMapper
   constructor: ->
-    @value = []
-    @allTheInputParamsToTheFunction = {}
+    @allTheLines = []
 
-  transmogrify: (allTheTexts) ->
-    new SourceCodeParser @, allTheTexts
+  variableOnLineNumberWithName: (lineNumber, identifier) ->
+    variablesForThisLine = @allTheLines[lineNumber] ||= []
+    for variable in variablesForThisLine
+      if variable?.identifier is identifier
+        return variable
 
-# decides what the editor should display, but doesn't evaluate
-class HoomanTransmogrifier extends SourceTransmogrifier
-  # this is also singleton. heyooo
-  singletonInstance = null
+    variablesForThisLine.push variable = identifier: identifier, value: undefined
+    variable
 
-  @sharedInstance: ->
-    if not singletonInstance
-      singletonInstance = new @ # monica: this means this
+  assignValue: (lineNumber, identifier, value) ->
+    variable = @variableOnLineNumberWithName lineNumber, identifier
+    variable.value = @makeTheValuePretty(value)
 
-    singletonInstance   # monica: this means "return singletonInstance"
+  iterateValue: (lineNumber, identifier, value) ->
+    variable = @variableOnLineNumberWithName lineNumber, identifier
+    (variable.iterations ||= []).push @makeTheValuePretty(value)
 
-  takeForgetMeNow: ->
-    @value = []
-
-  setValueSize: (numLines) ->
-    @value = []
-    @value.push "" for i in [1..numLines]
-
+  makeTheValuePretty: (value) ->
+    switch Object.prototype.toString.call(value).slice(8, -1)
+      when 'String' then "'#{value}'"
+      when 'Boolean' then value.toString().toUpperCase()
+      when 'Array'
+        innerValues = (@makeTheValuePretty(innerValue) for innerValue in value)
+        "[#{innerValues.join(', ')}]"
+      when 'Object'
+        innerValues = ("#{key}: #{@makeTheValuePretty(innerValue)}" for key, innerValue of value)
+        "{#{innerValues.join(', ')}}"
+      else value
 
   displayValue: ->
-    apple = @value.join("\n")
-    return apple
+    result = for line in @allTheLines
+      if line
+        textForThisLine = for variable in line
+          "#{variable.identifier} = #{variable.iterations?.join(' | ') || variable.value}"
+        textForThisLine.join " ; "
+    result.join "\n"
 
-  variableDeclaration: (variableNames, lineNumber) ->
-    for varName in variableNames
-      @value[lineNumber] += "#{varName} = undefined" + " "
+class SourceTransmogrifier
+  constructor: (@text, @variableMap) ->
+    @source = @text.split /[\n|\r]/
+  run: ->
+    # console.log @source.join("\n")
+    try
+      new Function("__VARIABLE_MAP__", "try{#{@source.join("\n")}}catch(e){}")(@variableMap)
+      winningVariableMap = @variableMap
 
-  functionDeclaration: (parameters, lineNumber) ->
-    allTheInputParamsToTheFunction = []
-    for param in parameters
-      allTheInputParamsToTheFunction[param] = undefined
-      @value[lineNumber] += "#{param} = #{@allTheInputParamsToTheFunction[param]}" + " "
+  variableAssignment: (lineNumber, variableName) ->
+    @source[lineNumber] += ";__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
 
-  loopExpression: (variableNames, lineNumber) ->
-    for varName in variableNames
-      @value[lineNumber] += "#{varName} = undefined |" + " "
-# var i = 0;                    i = 0
-# for (; i < 10; i++)           i = 0 | 1 | 2 | 3 | 4
-# {
-#   someThing = array[i];           someThing = 'a' | 'b' | 'c'
-# }
-# while (i < 5)           i = 0 | 1 | 2 | 3 | 4
-# {
-#   someThing = array[i];           someThing = 'a' | 'b' | 'c'
-# }
-
-  ifExpression: ->
-# if ( a > 0 )   # display on the correct branch
-#  a = 5                       a = 5
-# or
-# if ( a > 0 )
-#  a = 5
-# else
-#  a = -5                      a = -5
-
-
-  # this defines a function:
-  makeSureAllTheVariablesAreStillAlive: ->
-    for prettyVariableName in @allTheVariables
-      'f'
-
-  onEdit: ->
-
-
-# actually evaluates all the things
-class EvaluatingTransmogrifier extends SourceTransmogrifier
-  # this is a singleton. heyooo
-  singletonInstance = null
-
-  @sharedInstance: ->
-    if not singletonInstance
-      singletonInstance = new @
-
-    singletonInstance
-
+  iterationAssignment: (lineNumber, variableName) ->
+    @source[lineNumber] += ";__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
 
 # export ALL the things
-window.HoomanTransmogrifier = HoomanTransmogrifier
-window.EvaluatingTransmogrifier = EvaluatingTransmogrifier
 window.SourceCodeParser = SourceCodeParser
