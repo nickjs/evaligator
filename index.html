@@ -58,8 +58,8 @@
           codeParser = new SourceCodeParser(codeToHoomanDoer)
           codeParser.parseThemSourceCodes(theHopefullyNotArbitraryTextThatWasTyped)
 
-          @split.getEditor(1).getSession().setValue codeToHoomanDoer.value
-
+          @split.getEditor(1).getSession().setValue codeToHoomanDoer.displayValue()
+          
     window.Editor = new EditorView document.getElementById('editor')
 </script>
 

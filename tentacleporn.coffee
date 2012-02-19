@@ -2,9 +2,9 @@ class SourceCodeParser
   constructor: (@transmogrifier) -> #this assigns params to members
 
   parseThemSourceCodes: (text) ->
-    @transmogrifier.takeForgetMeNow()
-    
     entireSyntaxTree = Parser.Parser.parse text
+    @transmogrifier.setValueSize((text.split("\n")).length)
+
     @traverseSyntaxNode entireSyntaxTree
 
   getElementIfAnyOfType: (node, nodeType) ->
@@ -26,11 +26,11 @@ class SourceCodeParser
       identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
       identifierName = identifierNameNode.source.substr(identifierNameNode.range.location, 
                                                         identifierNameNode.range.length)
-      @transmogrifier.variableDeclaration identifierName
+      @transmogrifier.variableDeclaration identifierName, node.lineNumber
       console.log "there's a variable statement for: #{identifierName}"
 
     else if node.name is "IterationStatement"
-      @transmogrifier.loopExpression node.name
+      @transmogrifier.loopExpression node.name, node.lineNumber
       console.log "found a loop statement"
 
 
@@ -80,18 +80,28 @@ class HoomanTransmogrifier extends SourceTransmogrifier
     singletonInstance   # monica: this means "return singletonInstance"
 
   takeForgetMeNow: ->
-    @value = ""
+    @value = []
 
-  variableDeclaration: (theNameOfTheVariable) ->
-    @value += "#{theNameOfTheVariable} = undefined" + "\n"
+  setValueSize: (numLines) ->
+    @value = []
+    @value.push "" for i in [1..numLines]
+
+
+  displayValue: ->
+    apple = @value.join("\n")
+    return apple
+
+  variableDeclaration: (theNameOfTheVariable, lineNumber) ->
+    # just in case two things happen on the same line:
+    @value[lineNumber] += "#{theNameOfTheVariable} = undefined" + " "
 
   functionDeclaration: (parameters, lineNumber) ->
     for param in parameters
       @allTheInputParamsToTheFunction[param] = undefined
       @value[lineNumber] = "#{param} = #{@allTheInputParamsToTheFunction[param]}"
 
-  loopExpression: ->
-    @value += "for loop detected" + "\n"
+  loopExpression: (theNameOfTheVariable, lineNumber) ->
+    @value[lineNumber] =  "for loop detected" + "\n"
 # var i = 0;                    i = 0
 # for (; i < 10; i++)           i = 0 | 1 | 2 | 3 | 4
 # {
