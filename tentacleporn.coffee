@@ -39,7 +39,8 @@ class SourceCodeParser
   transmogrifyNode: (node) ->
     importantNodeNames = ["VariableDeclaration", "AssignmentExpression",
                           "FunctionDeclaration", "FunctionExpression",
-                          "ForStatement", "WhileStatement"]
+                          "ForStatement", "WhileStatement",
+                          "IfStatement"]
 
     if node.name in importantNodeNames
       @["transmogrify#{node.name}"](node)
@@ -66,6 +67,7 @@ class SourceCodeParser
     identifierNames = @getIdentifierNamesInWholeStatement node
     for identifierName in identifierNames || []
       @assignValue node.lineNumber, identifierName
+    false
 
   transmogrifyFunctionDeclaration: (node) ->
     paramListNode = @getAllNodesOfType node, "FormalParameterList"
@@ -75,6 +77,7 @@ class SourceCodeParser
 
     for identifierName in identifierNames || []
       @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
+    false
 
   # what follows is mega gross because for loops are complicated
   transmogrifyForStatement: (node) ->
@@ -98,6 +101,11 @@ class SourceCodeParser
 
     @recursivelyTransmogrifyAllTheThings @getAllNodesOfType(node, "Block")?[0]
     @BLOCK_MODE_GO = false
+
+  transmogrifyIfStatement: (node) ->
+    for blockNode in @getAllNodesOfType(node, "Block")
+      @recursivelyTransmogrifyAllTheThings blockNode
+    false
 
 
   ###########################################
