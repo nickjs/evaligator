@@ -32,12 +32,40 @@ test "where's my var defs at, part 7", ->
   equal @hooman.displayValue().trim(), "tuna = undefined fish = undefined"
 
 test "for ALL the things, part 1", ->
-  @monkey.parseThemSourceCodes("var a = 0\n for (; a < 3; a++ ) {}")
-  equal @hooman.displayValue().trim(), "a = undefined \nfor loop detected"
+  @monkey.parseThemSourceCodes("for (; tuna < 3; tuna++ ) {}")
+  equal @hooman.displayValue().trim(), "tuna = undefined |"
 
-  test "while ALL the things, part 1", ->
-  @monkey.parseThemSourceCodes("var a = 0\n while (a < 10) {a++}")
-  equal @hooman.displayValue().trim(), "a = undefined \nfor loop detected"
+test "for ALL the things, part 2", ->
+  @monkey.parseThemSourceCodes("for (var tuna = 0; tuna < 3; tuna++ ) {}")
+  equal @hooman.displayValue().trim(), "tuna = undefined |"
+
+test "for ALL the things, part 3", ->
+  @monkey.parseThemSourceCodes("for (;; tuna++ ) {}")
+  equal @hooman.displayValue().trim(), "tuna = undefined |"
+
+test "for ALL the things, part 4", ->
+  @monkey.parseThemSourceCodes("for (;;) {}")
+  equal @hooman.displayValue().trim(), ""
+
+test "while ALL the things, part 1", ->
+  @monkey.parseThemSourceCodes("while (tuna < 10) {}")
+  equal @hooman.displayValue().trim(), "tuna = undefined |"
+
+test "while ALL the things, part 2", ->
+  @monkey.parseThemSourceCodes("while () {}")
+  equal @hooman.displayValue().trim(), ""
+
+test "while ALL the things, part 3", ->
+  @monkey.parseThemSourceCodes("while (tuna++) {}")
+  equal @hooman.displayValue().trim(), "tuna = undefined |"
+
+test "while ALL the things, part 4", ->
+  @monkey.parseThemSourceCodes("while (tuna) {}")
+  equal @hooman.displayValue().trim(), "tuna = undefined |"
+
+test "while ALL the things, part 5", ->
+  @monkey.parseThemSourceCodes("while (tuna = 0) {}")
+  equal @hooman.displayValue().trim(), "tuna = undefined |"
 
 module "hooman stuffs",
   setup: ->

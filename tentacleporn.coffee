@@ -21,17 +21,23 @@ class SourceCodeParser
         possibleChildSourceElementNode = @getElementIfAnyOfType childNode, nodeType
         return possibleChildSourceElementNode if possibleChildSourceElementNode   # hurrah
 
+  getIdentifierNameFromNode: (node) ->
+    return node.source.substr(node.range.location, node.range.length) 
+
   hoomanTransmogrifyNode: (node) ->
     if node.name is "VariableStatement"
       identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
-      identifierName = identifierNameNode.source.substr(identifierNameNode.range.location, 
-                                                        identifierNameNode.range.length)
+      identifierName = @getIdentifierNameFromNode identifierNameNode
+
       @transmogrifier.variableDeclaration identifierName, node.lineNumber
       console.log "there's a variable statement for: #{identifierName}"
 
     else if node.name is "IterationStatement"
-      @transmogrifier.loopExpression node.name, node.lineNumber
-      console.log "found a loop statement"
+      identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
+      if identifierNameNode
+        identifierName = @getIdentifierNameFromNode identifierNameNode
+        @transmogrifier.loopExpression identifierName, node.lineNumber
+        console.log "found a loop statement"
 
 
   traverseSyntaxNode: (node) ->
@@ -101,7 +107,7 @@ class HoomanTransmogrifier extends SourceTransmogrifier
       @value[lineNumber] = "#{param} = #{@allTheInputParamsToTheFunction[param]}"
 
   loopExpression: (theNameOfTheVariable, lineNumber) ->
-    @value[lineNumber] =  "for loop detected" + "\n"
+    @value[lineNumber] += "#{theNameOfTheVariable} = undefined | " + " "
 # var i = 0;                    i = 0
 # for (; i < 10; i++)           i = 0 | 1 | 2 | 3 | 4
 # {
