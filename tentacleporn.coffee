@@ -7,8 +7,6 @@ winningVariableMap = null
 
 class SourceCodeParser
 
-  constructor: -> #this assigns params to members
-
   displayValue: ->
     winningVariableMap.displayValue()
 
@@ -56,13 +54,19 @@ class SourceCodeParser
   ###########################################
 
   transmogrifyVariableDeclaration: (node) ->
-    # ok here's the thing.
+     # ok here's the thing.
     # for var a,b, we have 2 VariableDeclaration nodes in this node and each has an identifier
     # for var a = b, we have 1 VariableDeclaration node, with two identifiers
     # so for variableDeclaration, we only care about the first identifier.
     identifierNames = @getIdentifierNamesInWholeStatement node
     @assignValue node.lineNumber, identifierNames[0]
 
+    # the only other interesting bit here is if we have var f = function (..){}
+    # in which case this node also has a FunctionExpression
+    possibleFunctionExpression = @getAllNodesOfType node, "FunctionExpression"
+    @transmogrifyFunctionDeclaration(possibleFunctionExpression[0]) if possibleFunctionExpression?[0]
+
+   
   transmogrifyAssignmentExpression: (node) ->
     identifierNames = @getIdentifierNamesInWholeStatement node
     for identifierName in identifierNames || []
