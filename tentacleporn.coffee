@@ -3,7 +3,7 @@
 ###########################################
 
 # maps all the vars deffed/used on a line so that they can be eval-ed
-winningVariableMap = null 
+winningVariableMap = null
 
 class SourceCodeParser
 
@@ -46,30 +46,33 @@ class SourceCodeParser
       when "WhileStatement"       then @transmogrifyWhileLoop node
       else                        return true
 
+  assignValue: (lineNumber, identifier) ->
+    key = if @BLOCK_MODE_GO then 'iterationAssignment' else 'variableAssignment'
+    @transmogrifier[key](lineNumber, identifier)
 
   ###########################################
   #### Node specific tranmogrifying
   ###########################################
 
   transmogrifyVariableDeclaration: (node) ->
-    # ok here's the thing. 
+    # ok here's the thing.
     # for var a,b, we have 2 VariableDeclaration nodes in this node and each has an identifier
     # for var a = b, we have 1 VariableDeclaration node, with two identifiers
     # so for variableDeclaration, we only care about the first identifier.
     identifierNames = @getIdentifierNamesInWholeStatement node
-    @transmogrifier.variableAssignment node.lineNumber, identifierNames[0]
+    @assignValue node.lineNumber, identifierNames[0]
 
   transmogrifyAssignmentExpression: (node) ->
     identifierNames = @getIdentifierNamesInWholeStatement node
     for identifierName in identifierNames || []
-      @transmogrifier.variableAssignment node.lineNumber, identifierName
+      @assignValue node.lineNumber, identifierName
 
   transmogrifyFunctionDeclaration: (node) ->
-    debugger
     paramListNode = @getAllNodesOfType node, "FormalParameterList"
     # the formal parameter list contains a list of children, all of which are identifiers
-    identifierNames = 
+    identifierNames =
       @getIdentifierNamesForNodeList(paramListNode[0].children) if (paramListNode?[0]?.children)
+
     for identifierName in identifierNames || []
       @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
 
@@ -84,22 +87,25 @@ class SourceCodeParser
       # so for each of those *NoIn nodes, we only care about the first identifier
       noInitNodes = @getAllNodesOfType(node, "VariableDeclarationNoIn") || @getAllNodesOfType(node, "ExpressionNoIn")
       identifierNames = (@getIdentifierNamesInWholeStatement(n)?[0] for n in noInitNodes)
-    else      
+    else
       secondExpressionNodes = @getAllNodesOfType(node, "Expression")
-      identifierNames = 
+      identifierNames =
         @getIdentifierNamesInWholeStatement secondExpressionNodes[0] if secondExpressionNodes?[0]
-   
-    # hurrah! here we have some list of identifiers at last!
+
+    @BLOCK_MODE_GO = true
     for identifierName in identifierNames || []
-      @transmogrifier.iterationAssignment node.lineNumber, identifierName
-    
+      @assignValue node.lineNumber, identifierName
+
+    @recursivelyTransmogrifyAllTheThings @getAllNodesOfType(node, "Block")?[0]
+    @BLOCK_MODE_GO = false
+
 
   ###########################################
   #### SyntaxNode helper functions. Hurrah!
   ###########################################
 
   # given a node, gives you nack its identifier name
-  getIdentifierNameFromNode: (node) -> 
+  getIdentifierNameFromNode: (node) ->
     return node.source.substr(node.range.location, node.range.length)
 
   # gives you any variables in this syntax node (can be a whole for loop etc)
@@ -124,7 +130,7 @@ class SourceCodeParser
 
     # depth first recurse on all the children to collect ALL the things
     for childNode in children
-      if childNode.name is nodeType 
+      if childNode.name is nodeType
         nodeList.push childNode
       else  # if not, are any of the children nodes of this type?
         possibleChildSourceElementNode = @getAllNodesOfType childNode, nodeType
