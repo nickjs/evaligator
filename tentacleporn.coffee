@@ -1,10 +1,14 @@
 class SourceCodeParser
   constructor: -> #this assigns params to members
-    @variableMap = new VariableMapper
 
   parseThemSourceCodes: (text) ->
+    @variableMap = new VariableMapper
+    @transmogrifier = new SourceTransmogrifier text, @variableMap
+
     entireSyntaxTree = Parser.Parser.parse text
     @traverseSyntaxNode entireSyntaxTree
+
+    @transmogrifier.run()
 
   getElementIfAnyOfType: (node, nodeType) ->
       return node if node.name is nodeType
@@ -36,10 +40,12 @@ class SourceCodeParser
 
   transmogrifyNode: (node) ->
     if node.name is "VariableStatement"
-      console.log "there's a variable statement for: #{identifierName}"
       identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
       identifierName = @getIdentifierNameFromNode identifierNameNode
+      console.log "there's a variable statement for: #{identifierName}"
+
       @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
+      @transmogrifier.variableAssignment node.lineNumber, identifierName
 
     else if node.name is "IterationStatement"
       console.log "found a loop statement"
@@ -47,6 +53,7 @@ class SourceCodeParser
       if identifierNameNode
         identifierName = @getIdentifierNameFromNode identifierNameNode
         @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
+        # @transmogrifier.variableAssignment node.lineNumber, identifierName
 
     else if node.name is "FunctionDeclaration"
       console.log "found a function definition"
@@ -57,8 +64,18 @@ class SourceCodeParser
           for paramName in paramNames
             @variableMap.variableOnLineNumberWithName node.lineNumber, paramName
 
+    else if node.name is "AssignmentExpression"
+      identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
+      identifierName = @getIdentifierNameFromNode identifierNameNode
+
+      @transmogrifier.variableAssignment node.lineNumber, identifierName
+
+    else
+      return true
+
   traverseSyntaxNode: (node) ->
-    @transmogrifyNode node
+    parseChildren = @transmogrifyNode node
+    return if parseChildren isnt true
 
     children = node.children
     return unless children
@@ -78,22 +95,37 @@ class VariableMapper
   constructor: ->
     @allTheLines = []
 
-  variableOnLineNumberWithName: (lineNumber, name) ->
+  variableOnLineNumberWithName: (lineNumber, identifier) ->
     variablesForThisLine = @allTheLines[lineNumber] ||= []
     for variable in variablesForThisLine
-      if variable?.name is name
+      if variable?.identifier is identifier
         return variable
 
-    variablesForThisLine.push variable = name: name, value: undefined
+    variablesForThisLine.push variable = identifier: identifier, value: undefined
     variable
+
+  assignValue: (lineNumber, identifier, value) ->
+    variable = @variableOnLineNumberWithName lineNumber, identifier
+    variable.value = value
 
   displayValue: ->
     result = for line in @allTheLines
       if line
         textForThisLine = for variable in line
-          "#{variable.name} = #{variable.iterations?.join(' | ') || variable.value}"
+          "#{variable.identifier} = #{variable.iterations?.join(' | ') || variable.value}"
         textForThisLine.join " ; "
     result.join "\n"
+
+class SourceTransmogrifier
+  constructor: (@text, @variableMap) ->
+    @source = @text.split /[\n|\r]/
+  run: ->
+    # console.log @source.join("\n")
+    try
+      new Function("__VARIABLE_MAP__", "try{#{@source.join("\n")}}catch(e){}")(@variableMap)
+
+  variableAssignment: (lineNumber, variableName) ->
+    @source[lineNumber] += ";__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
 
 # export ALL the things
 window.SourceCodeParser = SourceCodeParser
