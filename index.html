@@ -47,19 +47,17 @@
         @editor = @split.getEditor(0)
         @editor.focus()
 
-        window.addEventListener 'resize', ->
+        window.addEventListener 'resize', =>
           @split.resize()
 
         @editor.getSession().on 'change', =>
           theHopefullyNotArbitraryTextThatWasTyped = @editor.getSession().getDocument().getValue()
 
-          codeToHoomanDoer = HoomanTransmogrifier.sharedInstance()
-          
-          codeParser = new SourceCodeParser(codeToHoomanDoer)
-          codeParser.parseThemSourceCodes(theHopefullyNotArbitraryTextThatWasTyped)
+          codeParser = new SourceCodeParser
+          codeParser.parseThemSourceCodes theHopefullyNotArbitraryTextThatWasTyped
 
-          @split.getEditor(1).getSession().setValue codeToHoomanDoer.displayValue()
-          
+          @split.getEditor(1).getSession().setValue codeParser.displayValue()
+
     window.Editor = new EditorView document.getElementById('editor')
 </script>
 
