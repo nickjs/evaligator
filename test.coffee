@@ -67,6 +67,20 @@ test "while ALL the things, part 5", ->
   @monkey.parseThemSourceCodes("while (tuna = 0) {}")
   equal @hooman.displayValue().trim(), "tuna = undefined |"
 
+test "function definitions part 1", ->
+  @monkey.parseThemSourceCodes("function binarySearch(key, array){}")
+  equal @hooman.displayValue().trim(), "key = undefined array = undefined"
+
+test "function definitions part 2", ->
+  @monkey.parseThemSourceCodes("function binarySearch(){}")
+  equal @hooman.displayValue().trim(), ""
+
+test "var function definitions part 2", ->
+  @monkey.parseThemSourceCodes("var f = function f(x, y) { }")
+  equal @hooman.displayValue().trim(), "f = undefined x = undefined y = undefined"   
+
+
+
 module "hooman stuffs",
   setup: ->
     @hooman = HoomanTransmogrifier.sharedInstance()

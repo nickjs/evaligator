@@ -21,25 +21,44 @@ class SourceCodeParser
         possibleChildSourceElementNode = @getElementIfAnyOfType childNode, nodeType
         return possibleChildSourceElementNode if possibleChildSourceElementNode   # hurrah
 
+  getParamsInParamList: (node) -> 
+    children = node.children
+    return unless children
+
+    paramNames = []
+    for childNode in children
+      paramNames.push(@getIdentifierNameFromNode childNode) if childNode.name is "Identifier"
+
+    return paramNames
+
+
   getIdentifierNameFromNode: (node) ->
     return node.source.substr(node.range.location, node.range.length) 
 
   hoomanTransmogrifyNode: (node) ->
     if node.name is "VariableStatement"
+      console.log "there's a variable statement for: #{identifierName}"
       identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
       identifierName = @getIdentifierNameFromNode identifierNameNode
 
       @transmogrifier.variableDeclaration identifierName, node.lineNumber
-      console.log "there's a variable statement for: #{identifierName}"
-
+      
     else if node.name is "IterationStatement"
+      console.log "found a loop statement"
       identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
       if identifierNameNode
         identifierName = @getIdentifierNameFromNode identifierNameNode
         @transmogrifier.loopExpression identifierName, node.lineNumber
-        console.log "found a loop statement"
-
-
+        
+    else if node.name is "FunctionDeclaration"
+      console.log "found a function definition" 
+      paramListNode = @getElementIfAnyOfType node, "FormalParameterList"
+      if paramListNode
+        debugger
+        paramNames = @getParamsInParamList paramListNode
+        if paramNames
+          @transmogrifier.functionDeclaration paramNames, node.lineNumber
+     
   traverseSyntaxNode: (node) ->
     @hoomanTransmogrifyNode node;
 
@@ -49,17 +68,6 @@ class SourceCodeParser
     for childNode in children
       @traverseSyntaxNode childNode
 
-    # transmogrifier.variableDeclaration 'foo'
-    # transmogrifier.loopExpression 'anyVarThatNeedsToBeDisplayedOnTheForLineLikeTheIndexCounter'
-
-
-      # then recursively call SourceCodeParser() on the child of the for node
-
-    #if someNode is 'var'
-    #  transmogrifier.variableDeclaration someNode.varName
-    #else if someNode is 'for' or 'while' -> possibly display counter on this line
-    # then recursively call on child
-    #  transmogrifier.loopExpression someNode.stuff see above!
     #else if someNode is 'if'
     # recursively call on the child
     # else if someNode is 'function' -> display the input params and call recursively on child
@@ -102,9 +110,10 @@ class HoomanTransmogrifier extends SourceTransmogrifier
     @value[lineNumber] += "#{theNameOfTheVariable} = undefined" + " "
 
   functionDeclaration: (parameters, lineNumber) ->
+    allTheInputParamsToTheFunction = []
     for param in parameters
-      @allTheInputParamsToTheFunction[param] = undefined
-      @value[lineNumber] = "#{param} = #{@allTheInputParamsToTheFunction[param]}"
+      allTheInputParamsToTheFunction[param] = undefined
+      @value[lineNumber] += "#{param} = #{@allTheInputParamsToTheFunction[param]}" + " "
 
   loopExpression: (theNameOfTheVariable, lineNumber) ->
     @value[lineNumber] += "#{theNameOfTheVariable} = undefined | " + " "
