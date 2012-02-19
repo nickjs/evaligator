@@ -10,21 +10,49 @@ class SourceCodeParser
 
     @transmogrifier.run()
 
-  getElementIfAnyOfType: (node, nodeType) ->
-      return node if node.name is nodeType
 
-      children = node.children
-      return unless children
+  ###
+    SyntaxNode helper function
+  ###
 
-      for childNode in children
-        # is this node of this type?
-        return childNode if childNode.name is nodeType
+  # given a node, gives you back the variable in it
+  getIdentifierNameFromNode: (node) ->
+    return node.source.substr(node.range.location, node.range.length)
 
-        # if not, are any of the children nodes of this type?
-        possibleChildSourceElementNode = @getElementIfAnyOfType childNode, nodeType
-        return possibleChildSourceElementNode if possibleChildSourceElementNode   # hurrah
+  # gives you a list of nodes of nodeType
+  getElementsIfAnyOfType: (node, nodeType) ->
+    return node if node.name is nodeType
 
-  getParamsInParamList: (node) ->
+    nodeList = []
+    
+    children = node.children
+    return unless children
+
+    for childNode in children
+      if childNode.name is nodeType 
+        nodeList.push childNode
+
+      else  # if not, are any of the children nodes of this type?        
+        possibleChildSourceElementNode = @getElementsIfAnyOfType childNode, nodeType
+        if possibleChildSourceElementNode && possibleChildSourceElementNode.length > 0
+          nodeList = nodeList.concat possibleChildSourceElementNode
+
+    return nodeList if nodeList?.length
+
+  # gives you any variables in this parent
+  getIdentifierNamesForStatement: (node) ->
+    identifierNameNodes = @getElementsIfAnyOfType node, "Identifier"
+    identifierNames = @getNodeNamesFromNodeList(identifierNameNodes) if identifierNameNodes
+  
+  # monica is responsible for the copy paste but she is tired and gives zero fucks
+  getNodeNamesFromNodeList: (nodeList) -> 
+    paramNames = []
+    for childNode in nodeList
+      paramNames.push(@getIdentifierNameFromNode childNode) if childNode.name is "Identifier"
+
+    return paramNames
+
+  getParamNamesInFormalParamList: (node) -> 
     children = node.children
     return unless children
 
@@ -35,40 +63,54 @@ class SourceCodeParser
     return paramNames
 
 
-  getIdentifierNameFromNode: (node) ->
-    return node.source.substr(node.range.location, node.range.length)
-
   transmogrifyNode: (node) ->
     if node.name is "VariableStatement"
-      identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
-      identifierName = @getIdentifierNameFromNode identifierNameNode
-      console.log "there's a variable statement for: #{identifierName}"
+      console.log "there's a variable statement"
+      identifierNames = @getIdentifierNamesForStatement node 
+      for identifierName in identifierNames || []
+        @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
+        @transmogrifier.variableAssignment node.lineNumber, identifierName
 
-      @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
-      @transmogrifier.variableAssignment node.lineNumber, identifierName
+    # monica also apologizes for the code sins that follow and promises to fix them tomorrow  
+    else if node.name is "ForStatement"
+      console.log "found a for loop"
 
-    else if node.name is "IterationStatement"
-      console.log "found a loop statement"
-      identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
-      if identifierNameNode
-        identifierName = @getIdentifierNameFromNode identifierNameNode
+      firstExpressionNodes = @getElementsIfAnyOfType(node, "ForFirstExpression") || @getElementsIfAnyOfType(node, "Expression")
+      expressionNode = firstExpressionNodes?[0]
+      ###
+      if (firstExpressionNodes)
+        expressionNode = firstExpressionNodes[0]
+      else
+        firstAssignmentNodes = @getElementsIfAnyOfType node, "Expression"
+        if (firstAssignmentNodes)
+          expressionNode = firstAssignmentNodes[0]
+      ###
+
+      identifierNames = @getIdentifierNamesForStatement expressionNode
+      for identifierName in identifierNames || []
         @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
         @transmogrifier.iterationAssignment node.lineNumber, identifierName
 
-    else if node.name is "FunctionDeclaration"
+    else if node.name is "WhileStatement"
+      console.log "found a while loop"
+      identifierNames = @getIdentifierNamesForStatement node
+      for identifierName in identifierNames || []
+        @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
+        @transmogrifier.iterationAssignment node.lineNumber, identifierName
+
+    else if node.name is "FunctionDeclaration" or node.name is "FunctionExpression"
       console.log "found a function definition"
-      paramListNode = @getElementIfAnyOfType node, "FormalParameterList"
+      paramListNode = @getElementsIfAnyOfType node, "FormalParameterList"
       if paramListNode
-        paramNames = @getParamsInParamList paramListNode
+        paramNames = @getParamNamesInFormalParamList paramListNode[0]
         if paramNames
           for paramName in paramNames
             @variableMap.variableOnLineNumberWithName node.lineNumber, paramName
 
     else if node.name is "AssignmentExpression"
-      identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
-      identifierName = @getIdentifierNameFromNode identifierNameNode
-
-      @transmogrifier.variableAssignment node.lineNumber, identifierName
+      identifierNames = @getIdentifierNamesForStatement node
+      for identifierName in identifierNames || []
+        @transmogrifier.variableAssignment node.lineNumber, identifierName
 
     else
       return true
