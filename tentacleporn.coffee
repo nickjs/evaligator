@@ -21,18 +21,15 @@ class SourceCodeParser
         possibleChildSourceElementNode = @getElementIfAnyOfType childNode, nodeType
         return possibleChildSourceElementNode if possibleChildSourceElementNode   # hurrah
 
-  isThisANodeIShouldCareAbout: (nodeName) ->
-    return true if (nodeName == "VariableStatement" or nodeName == "IterationStatement")
-
   hoomanTransmogrifyNode: (node) ->
-    if (node.name is "VariableStatement")
+    if node.name is "VariableStatement"
       identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
       identifierName = identifierNameNode.source.substr(identifierNameNode.range.location, 
                                                         identifierNameNode.range.length)
       @transmogrifier.variableDeclaration identifierName
       console.log "there's a variable statement for: #{identifierName}"
 
-    else if (node.name is "IterationStatement")
+    else if node.name is "IterationStatement"
       @transmogrifier.loopExpression node.name
       console.log "found a loop statement"
 
