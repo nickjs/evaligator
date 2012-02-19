@@ -37,14 +37,14 @@ class SourceCodeParser
       @recursivelyTransmogrifyAllTheThings childNode
 
   transmogrifyNode: (node) ->
-    switch node.name
-      when "VariableDeclaration"  then @transmogrifyVariableDeclaration node
-      when "FunctionDeclaration"  then @transmogrifyFunctionDeclaration node
-      when "FunctionExpression"   then @transmogrifyFunctionDeclaration node
-      when "AssignmentExpression" then @transmogrifyAssignmentExpression node
-      when "ForStatement"         then @transmogrifyForLoop node
-      when "WhileStatement"       then @transmogrifyWhileLoop node
-      else                        return true
+    importantNodeNames = ["VariableDeclaration", "AssignmentExpression",
+                          "FunctionDeclaration", "FunctionExpression",
+                          "ForStatement", "WhileStatement"]
+
+    if node.name in importantNodeNames
+      @["transmogrify#{node.name}"](node)
+    else
+      true
 
   assignValue: (lineNumber, identifier) ->
     key = if @BLOCK_MODE_GO then 'iterationAssignment' else 'variableAssignment'
@@ -77,7 +77,7 @@ class SourceCodeParser
       @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
 
   # what follows is mega gross because for loops are complicated
-  transmogrifyForLoop: (node) ->
+  transmogrifyForStatement: (node) ->
     # we're looking either in the first  or second ; chunk of the for loop
     firstExpressionNodes = @getAllNodesOfType(node, "ForFirstExpression")
 
