@@ -1,8 +1,18 @@
+###########################################
+#### PEG parse all yo syntax codes
+###########################################
+
+# maps all the vars deffed/used on a line so that they can be eval-ed
+winningVariableMap = null 
+
 class SourceCodeParser
+
   constructor: -> #this assigns params to members
 
+  displayValue: ->
+    winningVariableMap.displayValue()
+
   parseThemSourceCodes: (text) ->
-    #text = "f = function f(x, y) { } ; x = undefined ; y = undefined"
     @variableMap = new VariableMapper
     @transmogrifier = new SourceTransmogrifier text, @variableMap
 
@@ -10,8 +20,6 @@ class SourceCodeParser
     @recursivelyTransmogrifyAllTheThings entireSyntaxTree
 
     @transmogrifier.run()
-
-
 
 
   ###########################################
@@ -86,9 +94,6 @@ class SourceCodeParser
       @transmogrifier.iterationAssignment node.lineNumber, identifierName
     
 
-
-
-
   ###########################################
   #### SyntaxNode helper functions. Hurrah!
   ###########################################
@@ -128,16 +133,11 @@ class SourceCodeParser
 
     return nodeList if nodeList?.length
 
-  
-    
 
 
-  
-
-  displayValue: ->
-    winningVariableMap.displayValue()
-
-winningVariableMap = null
+###########################################
+#### Maps and eval all yo variables
+###########################################
 
 class VariableMapper
   constructor: ->
