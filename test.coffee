@@ -5,39 +5,39 @@ module "parsing stuffs",
 
 test "where's my var defs at, part 1", ->
   @monkey.parseThemSourceCodes("var tuna")
-  equal @hooman.value, "tuna = undefined\n"
+  equal @hooman.displayValue().trim(), "tuna = undefined"
 
 test "where's my var defs at, part 2", ->
   @monkey.parseThemSourceCodes("var tuna = 3")
-  equal @hooman.value, "tuna = undefined\n"
+  equal @hooman.displayValue().trim(), "tuna = undefined"
 
 test "where's my var defs at, part 3", ->
   @monkey.parseThemSourceCodes("var var")
-  equal @hooman.value, ""
+  equal @hooman.displayValue().trim(), ""
 
 test "where's my var defs at, part 4", ->
   @monkey.parseThemSourceCodes("var")
-  equal @hooman.value, ""
+  equal @hooman.displayValue().trim(), ""
 
 test "where's my var defs at, part 5", ->
   @monkey.parseThemSourceCodes("var tuna;\nvar fish;")
-  equal @hooman.value, "tuna = undefined\nfish = undefined\n"
+  equal @hooman.displayValue().trim(), "tuna = undefined \nfish = undefined"
 
 test "where's my var defs at, part 6", ->
   @monkey.parseThemSourceCodes("var tuna; var fish;")
-  equal @hooman.value, "tuna = undefined\nfish = undefined\n"
+  equal @hooman.displayValue().trim(), "tuna = undefined fish = undefined"
 
 test "where's my var defs at, part 7", ->
   @monkey.parseThemSourceCodes("var tuna, fish;")
-  equal @hooman.value, "tuna = undefined\nfish = undefined\n"
+  equal @hooman.displayValue().trim(), "tuna = undefined fish = undefined"
 
 test "for ALL the things, part 1", ->
   @monkey.parseThemSourceCodes("var a = 0\n for (; a < 3; a++ ) {}")
-  equal @hooman.value, "a = undefined\nfor loop detected\n"
+  equal @hooman.displayValue().trim(), "a = undefined \nfor loop detected"
 
   test "while ALL the things, part 1", ->
   @monkey.parseThemSourceCodes("var a = 0\n while (a < 10) {a++}")
-  equal @hooman.value, "a = undefined\nfor loop detected\n"
+  equal @hooman.displayValue().trim(), "a = undefined \nfor loop detected"
 
 module "hooman stuffs",
   setup: ->
