@@ -75,24 +75,10 @@ test "function definitions part 2", ->
   @monkey.parseThemSourceCodes("function binarySearch(){}")
   equal @hooman.displayValue().trim(), ""
 
-test "var function definitions part 2", ->
+test "function definitions part 3", ->
+  @monkey.parseThemSourceCodes("function(x, y){}")
+  equal @hooman.displayValue().trim(), "x = undefined y = undefined"
+
+test "var AND function definitions part 1", ->
   @monkey.parseThemSourceCodes("var f = function f(x, y) { }")
   equal @hooman.displayValue().trim(), "f = undefined x = undefined y = undefined"   
-
-
-
-module "hooman stuffs",
-  setup: ->
-    @hooman = HoomanTransmogrifier.sharedInstance()
-
-test "print variable declaration", ->
-  @hooman.transmogrify "var foo;"
-  equal @hooman.value, "foo = undefined"
-
-test "print variable assignment", ->
-  @hooman.transmogrify "var foo = 3;"
-  equal @hooman.value, "foo = 3"
-
-test "print loop assignments", ->
-  @hooman.transmogrify "for (var i = 0; i < 3; i++) {}"
-  equal @hooman.value, "i = 0 | 1 | 2"

@@ -7,21 +7,26 @@ class SourceCodeParser
 
     @traverseSyntaxNode entireSyntaxTree
 
-  getElementIfAnyOfType: (node, nodeType) ->
-      return node if node.name is nodeType
+  getElementsIfAnyOfType: (node, nodeType) ->
+    return node if node.name is nodeType
 
-      children = node.children
-      return unless children
+    nodeList = []
+    
+    children = node.children
+    return unless children
 
-      for childNode in children
-        # is this node of this type?
-        return childNode if childNode.name is nodeType
+    for childNode in children
+      if childNode.name is nodeType 
+        nodeList.push childNode
 
-        # if not, are any of the children nodes of this type?
-        possibleChildSourceElementNode = @getElementIfAnyOfType childNode, nodeType
-        return possibleChildSourceElementNode if possibleChildSourceElementNode   # hurrah
+      else  # if not, are any of the children nodes of this type?        
+        possibleChildSourceElementNode = @getElementsIfAnyOfType childNode, nodeType
+        if possibleChildSourceElementNode && possibleChildSourceElementNode.length > 0
+          nodeList = nodeList.concat possibleChildSourceElementNode
 
-  getParamsInParamList: (node) -> 
+    return nodeList if nodeList?.length
+      
+  getParamNamesInFormalParamList: (node) -> 
     children = node.children
     return unless children
 
@@ -31,31 +36,55 @@ class SourceCodeParser
 
     return paramNames
 
+  # monica is responsible for the copy paste but she is tired and gives zero fucks
+  getNodeNamesFromNodeList: (nodeList) -> 
+    paramNames = []
+    for childNode in nodeList
+      paramNames.push(@getIdentifierNameFromNode childNode) if childNode.name is "Identifier"
+
+    return paramNames
 
   getIdentifierNameFromNode: (node) ->
     return node.source.substr(node.range.location, node.range.length) 
 
   hoomanTransmogrifyNode: (node) ->
     if node.name is "VariableStatement"
-      console.log "there's a variable statement for: #{identifierName}"
-      identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
-      identifierName = @getIdentifierNameFromNode identifierNameNode
-
-      @transmogrifier.variableDeclaration identifierName, node.lineNumber
+      # there may be multiple nodes of this kind on the same line. see var a, b
+      identifierNameNodes = @getElementsIfAnyOfType node, "Identifier"
+      if identifierNameNodes
+        identifierNames = @getNodeNamesFromNodeList identifierNameNodes
+        if identifierNames
+          @transmogrifier.variableDeclaration identifierNames, node.lineNumber
       
-    else if node.name is "IterationStatement"
-      console.log "found a loop statement"
-      identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
-      if identifierNameNode
-        identifierName = @getIdentifierNameFromNode identifierNameNode
-        @transmogrifier.loopExpression identifierName, node.lineNumber
-        
-    else if node.name is "FunctionDeclaration"
-      console.log "found a function definition" 
-      paramListNode = @getElementIfAnyOfType node, "FormalParameterList"
+    # monica also apologizes for the code sins that follow and promises to fix them tomorrow  
+    else if node.name is "ForStatement"
+      debugger
+      firstExpressionNodes = @getElementsIfAnyOfType node, "ForFirstExpression"
+
+      # i might not have a first expression, so then let's settle for the first assignment we find
+      if (firstExpressionNodes)
+        identifierNameNodes = @getElementsIfAnyOfType firstExpressionNodes[0], "Identifier"
+      else
+        firstAssignmentNodes = @getElementsIfAnyOfType node, "Expression"
+        if (firstAssignmentNodes)
+          identifierNameNodes = @getElementsIfAnyOfType firstAssignmentNodes[0], "Identifier"
+
+      if identifierNameNodes
+        identifierNames = @getNodeNamesFromNodeList identifierNameNodes
+        @transmogrifier.loopExpression identifierNames, node.lineNumber
+    
+    else if node.name is "WhileStatement"
+      identifierNameNodes = @getElementsIfAnyOfType node, "Identifier"
+      if identifierNameNodes
+        identifierNames = @getNodeNamesFromNodeList identifierNameNodes
+        @transmogrifier.loopExpression identifierNames, node.lineNumber
+            
+    else if node.name is "FunctionDeclaration" or node.name is "FunctionExpression"
+      paramListNode = @getElementsIfAnyOfType node, "FormalParameterList"
+
+      debugger
       if paramListNode
-        debugger
-        paramNames = @getParamsInParamList paramListNode
+        paramNames = @getParamNamesInFormalParamList paramListNode[0] 
         if paramNames
           @transmogrifier.functionDeclaration paramNames, node.lineNumber
      
@@ -105,9 +134,9 @@ class HoomanTransmogrifier extends SourceTransmogrifier
     apple = @value.join("\n")
     return apple
 
-  variableDeclaration: (theNameOfTheVariable, lineNumber) ->
-    # just in case two things happen on the same line:
-    @value[lineNumber] += "#{theNameOfTheVariable} = undefined" + " "
+  variableDeclaration: (variableNames, lineNumber) ->
+    for varName in variableNames
+      @value[lineNumber] += "#{varName} = undefined" + " "
 
   functionDeclaration: (parameters, lineNumber) ->
     allTheInputParamsToTheFunction = []
@@ -115,8 +144,9 @@ class HoomanTransmogrifier extends SourceTransmogrifier
       allTheInputParamsToTheFunction[param] = undefined
       @value[lineNumber] += "#{param} = #{@allTheInputParamsToTheFunction[param]}" + " "
 
-  loopExpression: (theNameOfTheVariable, lineNumber) ->
-    @value[lineNumber] += "#{theNameOfTheVariable} = undefined | " + " "
+  loopExpression: (variableNames, lineNumber) ->
+    for varName in variableNames
+      @value[lineNumber] += "#{varName} = undefined |" + " "
 # var i = 0;                    i = 0
 # for (; i < 10; i++)           i = 0 | 1 | 2 | 3 | 4
 # {
