@@ -31,6 +31,14 @@ test "where's my var defs at, part 7", ->
   @monkey.parseThemSourceCodes("var tuna, fish;")
   equal @hooman.value, "tuna = undefined\nfish = undefined\n"
 
+test "for ALL the things, part 1", ->
+  @monkey.parseThemSourceCodes("var a = 0\n for (; a < 3; a++ ) {}")
+  equal @hooman.value, "a = undefined\nfor loop detected\n"
+
+  test "while ALL the things, part 1", ->
+  @monkey.parseThemSourceCodes("var a = 0\n while (a < 10) {a++}")
+  equal @hooman.value, "a = undefined\nfor loop detected\n"
+
 module "hooman stuffs",
   setup: ->
     @hooman = HoomanTransmogrifier.sharedInstance()

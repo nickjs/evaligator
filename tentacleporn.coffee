@@ -3,12 +3,9 @@ class SourceCodeParser
 
   parseThemSourceCodes: (text) ->
     @transmogrifier.takeForgetMeNow()
-
-    allTheCodeLines = text.split "\n"
-
-    for line in allTheCodeLines
-      syntaxTreeForThisLine = Parser.Parser.parse line
-      @traverse syntaxTreeForThisLine
+    
+    entireSyntaxTree = Parser.Parser.parse text
+    @traverseSyntaxNode entireSyntaxTree
 
   getElementIfAnyOfType: (node, nodeType) ->
       return node if node.name is nodeType
@@ -24,17 +21,30 @@ class SourceCodeParser
         possibleChildSourceElementNode = @getElementIfAnyOfType childNode, nodeType
         return possibleChildSourceElementNode if possibleChildSourceElementNode   # hurrah
 
-  traverse: (node) ->
-    varStatementNode = @getElementIfAnyOfType node, "VariableStatement"
+  isThisANodeIShouldCareAbout: (nodeName) ->
+    return true if (nodeName == "VariableStatement" or nodeName == "IterationStatement")
 
-    if varStatementNode
-      # we have a variable statement/definition/initialization. find the culprit
-      identifierNameNode = @getElementIfAnyOfType varStatementNode, "IdentifierName"
+  hoomanTransmogrifyNode: (node) ->
+    if (node.name is "VariableStatement")
+      identifierNameNode = @getElementIfAnyOfType node, "IdentifierName"
+      identifierName = identifierNameNode.source.substr(identifierNameNode.range.location, 
+                                                        identifierNameNode.range.length)
+      @transmogrifier.variableDeclaration identifierName
+      console.log "there's a variable statement for: #{identifierName}"
 
-      if identifierNameNode
-        identifierName = identifierNameNode.source.substr(identifierNameNode.range.location, identifierNameNode.range.length)
-        console.log "there's a variable statement for: #{identifierName}"
-        @transmogrifier.variableDeclaration identifierName
+    else if (node.name is "IterationStatement")
+      @transmogrifier.loopExpression node.name
+      console.log "found a loop statement"
+
+
+  traverseSyntaxNode: (node) ->
+    @hoomanTransmogrifyNode node;
+
+    children = node.children
+    return unless children
+
+    for childNode in children
+      @traverseSyntaxNode childNode
 
     # transmogrifier.variableDeclaration 'foo'
     # transmogrifier.loopExpression 'anyVarThatNeedsToBeDisplayedOnTheForLineLikeTheIndexCounter'
@@ -84,6 +94,7 @@ class HoomanTransmogrifier extends SourceTransmogrifier
       @value[lineNumber] = "#{param} = #{@allTheInputParamsToTheFunction[param]}"
 
   loopExpression: ->
+    @value += "for loop detected" + "\n"
 # var i = 0;                    i = 0
 # for (; i < 10; i++)           i = 0 | 1 | 2 | 3 | 4
 # {
