@@ -106,6 +106,19 @@ class SourceCodeParser
     @recursivelyTransmogrifyAllTheThings @getAllNodesOfType(node, "Block")?[0]
     @BLOCK_MODE_GO = false
 
+  transmogrifyWhileStatement: (node) ->
+    # WhileStatement = Expression(thing in parans) + Statement(thing in statement)
+    # we only care about the identifiers in the expression
+    expressionNode = @getAllNodesOfType(node, "Expression")
+    identifierNames = @getIdentifierNamesInWholeStatement expressionNode?[0]
+
+    @BLOCK_MODE_GO = true
+    for identifierName in identifierNames || []
+      @assignValue node.lineNumber, identifierName
+
+    @recursivelyTransmogrifyAllTheThings @getAllNodesOfType(node, "Block")?[0]
+    @BLOCK_MODE_GO = false
+
   transmogrifyIfStatement: (node) ->
     for blockNode in @getAllNodesOfType(node, "Block")
       @recursivelyTransmogrifyAllTheThings blockNode

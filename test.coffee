@@ -59,12 +59,14 @@ test "for ALL the things, part 3", ->
   @monkey.parseThemSourceCodes(longCodeString)
   equal @monkey.displayValue().trim(), "array = [1, 3, '4']\ni = 0 | 1 | 2 ; count = 3 | 3 | 3"
 
-###
 test "while ALL the things, part 1", ->
   @monkey = new SourceCodeParser
-  @monkey.parseThemSourceCodes("var i = 0; while (i < 10) {}")
-  equal @monkey.displayValue().trim(), "tuna = undefined |"
-###
+  longCodeString = "var i = 0;\n"
+  longCodeString += "while (i < 3){ \n"
+  longCodeString += "i++; \n }"
+  @monkey.parseThemSourceCodes(longCodeString)
+  longResult = "i = 0\ni = 0 | 1 | 2\ni = 1 | 2 | 3"
+  equal @monkey.displayValue().trim(), longResult
 
 test "function definitions part 1", ->
   @monkey = new SourceCodeParser
@@ -76,7 +78,7 @@ test "function definitions part 2", ->
   @monkey.parseThemSourceCodes("function binarySearch(){}")
   equal @monkey.displayValue().trim(), ""
 
-test "var function definitions part 2", ->
+test "var function definitions part 1", ->
   @monkey = new SourceCodeParser
   @monkey.parseThemSourceCodes("var f = function f(x, y) { }")
   equal @monkey.displayValue().trim(), "x = undefined ; y = undefined ; f = function f(x, y) { }"
