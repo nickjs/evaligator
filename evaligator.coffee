@@ -70,21 +70,14 @@ class SourceCodeParser
       @assignValue node.lineNumber, identifierName
     false
 
-  transmogrifyFunctionExpression: (node) ->
-    @transmogrifyFunctionDeclaration node
-
   transmogrifyFunctionDeclaration: (node) ->
-    debugger
-    functionNameNode = @getAllNodesOfType node, "Identifier"
-    functionIdentifier = @getIdentifierNameFromNode functionNameNode[0] if functionNameNode?[0]
-
     paramListNode = @getAllNodesOfType node, "FormalParameterList"
     # the formal parameter list contains a list of children, all of which are identifiers
     identifierNames =
       @getIdentifierNamesForNodeList(paramListNode[0].children) if (paramListNode?[0]?.children)
 
     returnStatementNode = @getAllNodesOfType node, "ReturnStatement"
-    returnStatementIdentifier = @getIdentifierNameFromNode returnStatementNode[0] if returnStatementNode?[0]
+    returnStatementIdentifier = @getIdentifierNamesInWholeStatement returnStatementNode[0] if returnStatementNode?[0]
 
     # HEY NICK LISTEN LISTEN do something with the return statement here
 
@@ -120,7 +113,7 @@ class SourceCodeParser
     # we only care about the identifiers in the expression
     # and more sepcifically, only about the first identifier in the expression
     expressionNode = @getAllNodesOfType(node, "Expression")
-    identifierNames = @getIdentifierNameFromNode expressionNode[0] if expressionNode?[0]
+    identifierNames = @getIdentifierNamesInWholeStatement expressionNode[0] if expressionNode?[0]
 
     @BLOCK_MODE_GO = true
     @assignValue node.lineNumber, identifierNames[0] if expressionNode?[0]
