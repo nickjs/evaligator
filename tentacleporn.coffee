@@ -13,6 +13,7 @@ class SourceCodeParser
   parseThemSourceCodes: (text) ->
     @variableMap = new VariableMapper
     @transmogrifier = new SourceTransmogrifier text, @variableMap
+    @nodeCallback = null
 
     entireSyntaxTree = Parser.Parser.parse text
     @recursivelyTransmogrifyAllTheThings entireSyntaxTree
@@ -25,18 +26,22 @@ class SourceCodeParser
   ###########################################
 
   recursivelyTransmogrifyAllTheThings: (node) ->
-    parseChildren = @transmogrifyNode node
-    return if parseChildren isnt true
+    if @nodeCallback
+      @nodeCallback.callback.call(@, @nodeCallback.node, node)
+      @nodeCallback = null
 
+    @transmogrifyNode node, options = {} # no worries, i checked my organ donor card to make up for this
     children = node.children
-    return unless children
+    if children and options.parseChildren is true
+      for childNode in children
+        @recursivelyTransmogrifyAllTheThings childNode
 
-    for childNode in children
-      @recursivelyTransmogrifyAllTheThings childNode
+    if options.callback
+      @nodeCallback = {node: node, callback: options.callback}
 
-  transmogrifyNode: (node) ->
-    transmogrifyFunction = @["transmogrify#{node.name}"]
-    if transmogrifyFunction then transmogrifyFunction.call(@, node) else true
+  transmogrifyNode: (node, options) ->
+    trannyFunction = @["transmogrify#{node.name}"]
+    if trannyFunction then trannyFunction.call(@, node, options) else options.parseChildren = true
 
   assignValue: (lineNumber, identifier) ->
     key = if @BLOCK_MODE_GO then 'iterationAssignment' else 'variableAssignment'
@@ -46,18 +51,20 @@ class SourceCodeParser
   #### Node specific tranmogrifying
   ###########################################
 
-  transmogrifyVariableDeclaration: (node) ->
+  transmogrifyVariableDeclaration: (node, options) ->
     # ok here's the thing.
     # for var a,b, we have 2 VariableDeclaration nodes in this node and each has an identifier
     # for var a = b, we have 1 VariableDeclaration node, with two identifiers
     # so for variableDeclaration, we only care about the first identifier.
-    identifierNames = @getIdentifierNamesInWholeStatement node
-    @assignValue node.lineNumber, identifierNames[0]
+    identifierName = @getIdentifierNamesInWholeStatement(node)[0]
+
+    options.callback = (_, nextNode) ->
+      @assignValue nextNode.lineNumber, identifierName
 
     # the only other interesting bit here is if we have var f = function (..){}
     # in which case this node also has a FunctionExpression
-    possibleFunctionExpression = @getAllNodesOfType node, "FunctionExpression"
-    @transmogrifyFunctionDeclaration(possibleFunctionExpression[0]) if possibleFunctionExpression?[0]
+    possibleFunctionExpression = @getAllNodesOfType(node, "FunctionExpression")?[0]
+    @transmogrifyFunctionDeclaration(possibleFunctionExpression, options, identifierName) if possibleFunctionExpression
 
 
   transmogrifyAssignmentExpression: (node) ->
@@ -70,13 +77,12 @@ class SourceCodeParser
       @assignValue node.lineNumber, identifierName
     false
 
-  transmogrifyFunctionExpression: (node) ->
-    @transmogrifyFunctionDeclaration node
+  transmogrifyFunctionExpression: (node, options) ->
+    @transmogrifyFunctionDeclaration node, options
 
-  transmogrifyFunctionDeclaration: (node) ->
-    debugger
+  transmogrifyFunctionDeclaration: (node, options, functionIdentifier) ->
     functionNameNode = @getAllNodesOfType node, "Identifier"
-    functionIdentifier = @getIdentifierNameFromNode functionNameNode[0] if functionNameNode?[0]
+    functionIdentifier ||= @getIdentifierNameFromNode functionNameNode[0] if functionNameNode?[0]
 
     paramListNode = @getAllNodesOfType node, "FormalParameterList"
     # the formal parameter list contains a list of children, all of which are identifiers
@@ -90,6 +96,11 @@ class SourceCodeParser
 
     for identifierName in identifierNames || []
       @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
+
+    options.parseChildren = true
+    options.callback = (_, nextNode) ->
+      @transmogrifier.functionDeclaration nextNode.lineNumber, functionIdentifier
+
     false
 
   # what follows is mega gross because for loops are complicated
@@ -234,6 +245,9 @@ class SourceTransmogrifier
 
   iterationAssignment: (lineNumber, variableName) ->
     @source[lineNumber] += ";__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
+
+  functionDeclaration: (lineNumber, name) ->
+    @source[lineNumber] += ";#{name}();"
 
 # export ALL the things
 window.SourceCodeParser = SourceCodeParser
