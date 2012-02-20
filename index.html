@@ -1,11 +1,11 @@
 <html>
 <head>
-  <title>Code Monster Thing</title>
-  <link rel="stylesheet" type="text/css" href="style.css" title="default"> 
+  <title>Evaligator</title>
+  <link rel="stylesheet" type="text/css" href="style.css" title="default">
   <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
 </head>
 <body>
-  
+
   <div class="pageTitle">evaligator.js<br/>
     <span class="alligator">^^^^^U^^^U^=___ </span>
   </div>
@@ -13,8 +13,8 @@
   <div class="notEditor">
     <h1>What it is</h1>
     <p>CoffeeScript thingamajig. As you type javascript code on the left, it gets automagically evaluated on the right.</p>
-    <p>Start typing things below. Or, 
-    <input type="button" class="button" value="load" onClick="loadExample();"> an example. 
+    <p>Start typing things below. Or,
+    <input type="button" class="button" value="load" onClick="loadExample();"> an example.
     And then type things.</p>
   </div>
 
@@ -23,7 +23,7 @@
   <div class="notEditor">
     <h1>Stuff that works</h1>
     <p>Variables, assignments, loops, if statements, changing the value of a variable somewhere and seeing the change propagate everywhere, js syntax errors (thanks ace!)</p>
-        
+
     <h1>Stuff that doesn't</h1>
     <p>comments, things that make it go into infinite loops, asking it to do the dishes, functions</p>
   </div>
@@ -33,7 +33,7 @@
   <script src="ace/theme-monokai-uncompressed.js" type="text/javascript"></script>
   <script src="lib/parser.js" type="text/javascript"></script>
   <script src="lib/coffee-script.js" type="text/javascript"></script>
-  <script src="tentacleporn.coffee" type="text/coffeescript"></script>
+  <script src="evaligator.coffee" type="text/coffeescript"></script>
 
   <script type="text/coffeescript">
     @loadExample = loadExample = () ->
@@ -51,7 +51,7 @@
               allTheOddThings += b + ', ';
            }
       }"""
-      
+
       window.Editor.split.getEditor(0).getSession().setValue sampleCode
 
     class EditorView
@@ -84,7 +84,7 @@
 
           @split.getEditor(1).getSession().setValue codeParser.displayValue()
 
-    
+
 
     window.Editor = new EditorView document.getElementById('editor')
 </script>
