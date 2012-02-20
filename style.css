@@ -5,6 +5,7 @@
 body{
   font-family: 'Droid Sans', sans-serif;
   background-color: white;
+  padding-bottom: 80px;
 }
 
 #editor {
