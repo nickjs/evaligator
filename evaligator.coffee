@@ -51,16 +51,21 @@ class SourceCodeParser
     # for var a,b, we have 2 VariableDeclaration nodes in this node and each has an identifier
     # for var a = b, we have 1 VariableDeclaration node, with two identifiers
     # so for variableDeclaration, we only care about the first identifier.
-    identifierNames = @getIdentifierNamesInWholeStatement node
-    @assignValue node.lineNumber, identifierNames[0]
 
     # the only other interesting bit here is if we have var f = function (..){}
     # in which case this node also has a FunctionExpression
     possibleFunctionExpression = @getAllNodesOfType node, "FunctionExpression"
-    @transmogrifyFunctionExpression(possibleFunctionExpression[0]) if possibleFunctionExpression?[0]
+    return @transmogrifyFunctionExpression(possibleFunctionExpression[0]) if possibleFunctionExpression?[0]
+
+    identifierNames = @getIdentifierNamesInWholeStatement node
+    @assignValue node.lineNumber, identifierNames[0]
 
 
   transmogrifyAssignmentExpression: (node) ->
+    # same as above
+    possibleFunctionExpression = @getAllNodesOfType node, "FunctionExpression"
+    return @transmogrifyFunctionExpression(possibleFunctionExpression[0]) if possibleFunctionExpression?[0]
+
     # AssignmentExpression = LeftHandSideExpression(identifier) + other stuff
     # however in a = i++ and a = b + c, the syntaxNodes for i,b,c are literally identical
     # so fuck yo grammars, we can only display a
