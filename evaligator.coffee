@@ -197,6 +197,7 @@ class VariableMapper
     switch Object.prototype.toString.call(value).slice(8, -1)
       when 'String' then "'#{value}'"
       when 'Boolean' then value.toString().toUpperCase()
+      when 'Function' then value.toString().replace(/[\r|\n|\s]+/g, ' ')
       when 'Array'
         innerValues = (@makeTheValuePretty(innerValue) for innerValue in value)
         "[#{innerValues.join(', ')}]"
@@ -217,7 +218,8 @@ class SourceTransmogrifier
   constructor: (@text, @variableMap) ->
     @source = @text.split /[\n|\r]/
   run: ->
-    # console.log @source.join("\n")
+    if window.DEBUG_THE_EVALIGATOR
+      document.getElementById('transmogrifier-debug-output').innerText = @source.join("\n")
     try
       new Function("__VARIABLE_MAP__", "try{#{@source.join("\n")}}catch(e){}")(@variableMap)
       winningVariableMap = @variableMap
@@ -230,3 +232,5 @@ class SourceTransmogrifier
 
 # export ALL the things
 window.SourceCodeParser = SourceCodeParser
+window.SourceTransmogrifier = SourceTransmogrifier
+window.VariableMapper = VariableMapper
