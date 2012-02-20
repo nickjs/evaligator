@@ -111,14 +111,15 @@ class SourceCodeParser
     @BLOCK_MODE_GO = false
 
   transmogrifyWhileStatement: (node) ->
+    debugger
     # WhileStatement = Expression(thing in parans) + Statement(thing in statement)
     # we only care about the identifiers in the expression
+    # and more sepcifically, only about the first identifier in the expression
     expressionNode = @getAllNodesOfType(node, "Expression")
-    identifierNames = @getIdentifierNamesInWholeStatement expressionNode?[0]
+    identifierNames = @getIdentifierNamesInWholeStatement expressionNode[0] if expressionNode?[0]
 
     @BLOCK_MODE_GO = true
-    for identifierName in identifierNames || []
-      @assignValue node.lineNumber, identifierName
+    @assignValue node.lineNumber, identifierNames[0] if expressionNode?[0]
 
     @recursivelyTransmogrifyAllTheThings @getAllNodesOfType(node, "Block")?[0]
     @BLOCK_MODE_GO = false

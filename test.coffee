@@ -78,6 +78,15 @@ test "while ALL the things, part 1", ->
   longResult = "i = 0\ni = 0 | 1 | 2\ni = 1 | 2 | 3"
   equal @monkey.displayValue().trim(), longResult
 
+test "while ALL the things, part 2", ->
+  @monkey = new SourceCodeParser
+  longCodeString = "var i = 0;\nvar array = [1,3,'4']; \n"
+  longCodeString += "while (i < array.length){ \n"
+  longCodeString += "i++; \n }"
+  @monkey.parseThemSourceCodes(longCodeString)
+  longResult = "i = 0\narray = [1, 3, '4']\ni = 0 | 1 | 2\ni = 1 | 2 | 3"
+  equal @monkey.displayValue().trim(), longResult
+
 test "function definitions part 1", ->
   @monkey = new SourceCodeParser
   @monkey.parseThemSourceCodes("function binarySearch(key, array){}")
