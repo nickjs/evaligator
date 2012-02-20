@@ -96,17 +96,20 @@ class SourceCodeParser
         @getIdentifierNamesInWholeStatement secondExpressionNodes[0] if secondExpressionNodes?[0]
 
     @BLOCK_MODE_GO = true
+    @transmogrifier.ensureBlock node.lineNumber
+
     for identifierName in identifierNames || []
       @assignValue node.lineNumber, identifierName
 
-    @recursivelyTransmogrifyAllTheThings @getAllNodesOfType(node, "Block")?[0]
+    @recursivelyTransmogrifyAllTheThings statementNode = @getAllNodesOfType(node, "Statement")?[0]
+
+    @transmogrifier.ensureBlock statementNode.endLineNumber, yes
     @BLOCK_MODE_GO = false
 
   transmogrifyIfStatement: (node) ->
     for blockNode in @getAllNodesOfType(node, "Block")
       @recursivelyTransmogrifyAllTheThings blockNode
     false
-
 
   ###########################################
   #### SyntaxNode helper functions. Hurrah!
@@ -198,10 +201,14 @@ class SourceTransmogrifier
   constructor: (@text, @variableMap) ->
     @source = @text.split /[\n|\r]/
   run: ->
-    # console.log @source.join("\n")
+    console.log @source.join("\n")
     try
       new Function("__VARIABLE_MAP__", "try{#{@source.join("\n")}}catch(e){}")(@variableMap)
       winningVariableMap = @variableMap
+
+  ensureBlock: (lineNumber, isEndOfBlock) ->
+    console.log lineNumber, isEndOfBlock
+    @source[lineNumber] += if isEndOfBlock then "}" else "{"
 
   variableAssignment: (lineNumber, variableName) ->
     @source[lineNumber] += ";__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
