@@ -47,7 +47,7 @@ class SourceCodeParser
   ###########################################
 
   transmogrifyVariableDeclaration: (node) ->
-     # ok here's the thing.
+    # ok here's the thing.
     # for var a,b, we have 2 VariableDeclaration nodes in this node and each has an identifier
     # for var a = b, we have 1 VariableDeclaration node, with two identifiers
     # so for variableDeclaration, we only care about the first identifier.
@@ -75,6 +75,11 @@ class SourceCodeParser
     # the formal parameter list contains a list of children, all of which are identifiers
     identifierNames =
       @getIdentifierNamesForNodeList(paramListNode[0].children) if (paramListNode?[0]?.children)
+
+    returnStatementNode = @getAllNodesOfType node, "ReturnStatement"
+    returnStatementIdentifier = @getIdentifierNamesInWholeStatement returnStatementNode[0] if returnStatementNode?[0]
+
+    # HEY NICK LISTEN LISTEN do something with the return statement here
 
     for identifierName in identifierNames || []
       @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
@@ -104,7 +109,6 @@ class SourceCodeParser
     @BLOCK_MODE_GO = false
 
   transmogrifyWhileStatement: (node) ->
-    debugger
     # WhileStatement = Expression(thing in parans) + Statement(thing in statement)
     # we only care about the identifiers in the expression
     # and more sepcifically, only about the first identifier in the expression
