@@ -35,15 +35,8 @@ class SourceCodeParser
       @recursivelyTransmogrifyAllTheThings childNode
 
   transmogrifyNode: (node) ->
-    importantNodeNames = ["VariableDeclaration", "AssignmentExpression",
-                          "FunctionDeclaration", "FunctionExpression",
-                          "ForStatement", "WhileStatement",
-                          "IfStatement"]
-
-    if node.name in importantNodeNames
-      @["transmogrify#{node.name}"](node)
-    else
-      true
+    transmogrifyFunction = @["transmogrify#{node.name}"]
+    if transmogrifyFunction then transmogrifyFunction.call(@, node) else true
 
   assignValue: (lineNumber, identifier) ->
     key = if @BLOCK_MODE_GO then 'iterationAssignment' else 'variableAssignment'
@@ -66,7 +59,7 @@ class SourceCodeParser
     possibleFunctionExpression = @getAllNodesOfType node, "FunctionExpression"
     @transmogrifyFunctionDeclaration(possibleFunctionExpression[0]) if possibleFunctionExpression?[0]
 
-   
+
   transmogrifyAssignmentExpression: (node) ->
     # AssignmentExpression = LeftHandSideExpression(identifier) + other stuff
     # however in a = i++ and a = b + c, the syntaxNodes for i,b,c are literally identical
