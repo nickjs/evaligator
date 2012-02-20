@@ -48,6 +48,13 @@ pre {
   letter-spacing: 2px;
 }
 
+.alligator{
+  font-family: Georgia;
+  text-align: center;
+  font-size: 22px;
+  letter-spacing: -2px;
+}
+
 h1{
   color: #272822;
   text-shadow: white 1px 1px 0px;
