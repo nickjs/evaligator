@@ -241,13 +241,13 @@ class SourceTransmogrifier
       winningVariableMap = @variableMap
 
   variableAssignment: (lineNumber, variableName) ->
-    @source[lineNumber] += ";__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
+    @source[lineNumber] += "\n;__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
 
   iterationAssignment: (lineNumber, variableName) ->
-    @source[lineNumber] += ";__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
+    @source[lineNumber] += "\n;__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
 
   functionDeclaration: (lineNumber, name) ->
-    @source[lineNumber] += ";#{name}();"
+    @source[lineNumber] += "\n;#{name}();"
 
 # export ALL the things
 window.SourceCodeParser = SourceCodeParser
