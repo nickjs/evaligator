@@ -8,7 +8,7 @@ winningVariableMap = null
 class SourceCodeParser
 
   displayValue: ->
-    winningVariableMap.displayValue()
+    winningVariableMap?.displayValue() || ""
 
   parseThemSourceCodes: (text) ->
     @variableMap = new VariableMapper
@@ -235,9 +235,8 @@ class SourceTransmogrifier
       """
         try{
           #{@source.join("\n")}
-          for(var __i__ = 0, __count__ = __FUNCTION_MAP__.length; __i__ < __count__; __i__++) {
+          for(var __i__ = 0, __count__ = __FUNCTION_MAP__.length; __i__ < __count__; __i__++)
             __FUNCTION_MAP__[__i__]();
-          }
         } catch(e) {}
       """
 
