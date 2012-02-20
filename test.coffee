@@ -42,6 +42,16 @@ test "where's my var defs at, part 8", ->
   @monkey.parseThemSourceCodes("var array = [1,3,4]; \nvar count = array.length")
   equal @monkey.displayValue().trim(), "array = [1, 3, 4]\ncount = 3"
 
+test "where's my var defs at, part 9", ->
+  @monkey = new SourceCodeParser
+  @monkey.parseThemSourceCodes("var a; \nvar i = 3;\na = 2 + i;")
+  equal @monkey.displayValue().trim(), "a = undefined\ni = 3\na = 5"
+
+test "where's my var defs at, part 10", ->
+  @monkey = new SourceCodeParser
+  @monkey.parseThemSourceCodes("var a; \nvar i = 3;\na = i++;")
+  equal @monkey.displayValue().trim(), "a = undefined\ni = 3\na = 3"
+
 test "for ALL the things, part 1", ->
   @monkey = new SourceCodeParser
   @monkey.parseThemSourceCodes("for (var i = 0; i < 3; i++ ) { \n}")

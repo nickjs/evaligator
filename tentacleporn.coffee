@@ -68,7 +68,11 @@ class SourceCodeParser
 
    
   transmogrifyAssignmentExpression: (node) ->
-    identifierNames = @getIdentifierNamesInWholeStatement node
+    # AssignmentExpression = LeftHandSideExpression(identifier) + other stuff
+    # however in a = i++ and a = b + c, the syntaxNodes for i,b,c are literally identical
+    # so fuck yo grammars, we can only display a
+    firstLeftHandSideExpression = @getAllNodesOfType(node, "LeftHandSideExpression")
+    identifierNames = @getIdentifierNamesInWholeStatement firstLeftHandSideExpression?[0]
     for identifierName in identifierNames || []
       @assignValue node.lineNumber, identifierName
     false
