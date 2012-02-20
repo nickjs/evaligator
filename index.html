@@ -38,13 +38,19 @@
   <script type="text/coffeescript">
     @loadExample = loadExample = () ->
       # initialize the editor with some random stuff
-      sampleCode = "var a = 0;\nvar b = a;\n\nvar arr = ['tuna', 'fish'];\n"
-      sampleCode += "var allTheEvenThings = '';\n\n"
-      sampleCode += "for (var i = 0; i < 2 * arr.length; i++){\n"
-      sampleCode += "     b = b + i;\n\n"
-      sampleCode += "     if (b % 2){\n"
-      sampleCode += "          allTheEvenThings += b + ', ';\n"
-      sampleCode += "     }\n}"
+      sampleCode = """
+      var a = 0;
+      var b = a;
+
+      var arr = ['tuna', 'fish'];
+      var allTheOddThings = '';
+
+      for (var i = 0; i < 2 * arr.length; i++){
+           b += i;
+           if (b % 2 != 0){
+              allTheOddThings += b + ', ';
+           }
+      }"""
       
       window.Editor.split.getEditor(0).getSession().setValue sampleCode
 
