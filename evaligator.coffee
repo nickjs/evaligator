@@ -57,7 +57,7 @@ class SourceCodeParser
     # the only other interesting bit here is if we have var f = function (..){}
     # in which case this node also has a FunctionExpression
     possibleFunctionExpression = @getAllNodesOfType node, "FunctionExpression"
-    @transmogrifyFunctionDeclaration(possibleFunctionExpression[0]) if possibleFunctionExpression?[0]
+    @transmogrifyFunctionExpression(possibleFunctionExpression[0]) if possibleFunctionExpression?[0]
 
 
   transmogrifyAssignmentExpression: (node) ->
@@ -70,6 +70,9 @@ class SourceCodeParser
       @assignValue node.lineNumber, identifierName
     false
 
+  transmogrifyFunctionExpression: (node) ->
+    @transmogrifyFunctionDeclaration node
+
   transmogrifyFunctionDeclaration: (node) ->
     paramListNode = @getAllNodesOfType node, "FormalParameterList"
     # the formal parameter list contains a list of children, all of which are identifiers
@@ -77,12 +80,15 @@ class SourceCodeParser
       @getIdentifierNamesForNodeList(paramListNode[0].children) if (paramListNode?[0]?.children)
 
     returnStatementNode = @getAllNodesOfType node, "ReturnStatement"
-    returnStatementIdentifier = @getIdentifierNamesInWholeStatement returnStatementNode[0] if returnStatementNode?[0]
+    returnStatementIdentifier = @getIdentifierNameFromNode returnStatementNode[0] if returnStatementNode?[0]
 
     # HEY NICK LISTEN LISTEN do something with the return statement here
 
     for identifierName in identifierNames || []
       @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
+
+    @transmogrifier.functionDeclaration node.lineNumber
+    @recursivelyTransmogrifyAllTheThings @getAllNodesOfType(node, "FunctionBody")[0]
     false
 
   # what follows is mega gross because for loops are complicated
@@ -113,7 +119,7 @@ class SourceCodeParser
     # we only care about the identifiers in the expression
     # and more sepcifically, only about the first identifier in the expression
     expressionNode = @getAllNodesOfType(node, "Expression")
-    identifierNames = @getIdentifierNamesInWholeStatement expressionNode[0] if expressionNode?[0]
+    identifierNames = @getIdentifierNameFromNode expressionNode[0] if expressionNode?[0]
 
     @BLOCK_MODE_GO = true
     @assignValue node.lineNumber, identifierNames[0] if expressionNode?[0]
@@ -197,7 +203,7 @@ class VariableMapper
     switch Object.prototype.toString.call(value).slice(8, -1)
       when 'String' then "'#{value}'"
       when 'Boolean' then value.toString().toUpperCase()
-      when 'Function' then value.toString().replace(/[\r|\n|\s]+/g, ' ')
+      when 'Function' then (functionString = value.toString()).substr(0,functionString.indexOf('{'))
       when 'Array'
         innerValues = (@makeTheValuePretty(innerValue) for innerValue in value)
         "[#{innerValues.join(', ')}]"
@@ -217,18 +223,35 @@ class VariableMapper
 class SourceTransmogrifier
   constructor: (@text, @variableMap) ->
     @source = @text.split /[\n|\r]/
+    @functionMap = []
+
   run: ->
+    compiledSource =
+      """
+        try{
+          #{@source.join("\n")}
+          for(var __i__ = 0, __count__ = __FUNCTION_MAP__.length; __i__ < __count__; __i__++) {
+            __FUNCTION_MAP__[__i__]();
+          }
+        } catch(e) {}
+      """
+
     if window.DEBUG_THE_EVALIGATOR
-      document.getElementById('transmogrifier-debug-output').innerText = @source.join("\n")
+      document.getElementById('transmogrifier-debug-output').innerText = compiledSource
     try
-      new Function("__VARIABLE_MAP__", "try{#{@source.join("\n")}}catch(e){}")(@variableMap)
+      new Function("__VARIABLE_MAP__", "__FUNCTION_MAP__", compiledSource)(@variableMap, @functionMap)
       winningVariableMap = @variableMap
 
   variableAssignment: (lineNumber, variableName) ->
-    @source[lineNumber] += "\n;__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
+    @source[lineNumber] += "\n__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
 
   iterationAssignment: (lineNumber, variableName) ->
-    @source[lineNumber] += "\n;__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
+    @source[lineNumber] += "\n__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
+
+  functionDeclaration: (lineNumber) ->
+    line = @source[lineNumber]
+    index = line.indexOf 'function'
+    @source[lineNumber] = line.substr(0, index) + " __FUNCTION_MAP__[__FUNCTION_MAP__.length] = " + line.substr(index)
 
 # export ALL the things
 window.SourceCodeParser = SourceCodeParser
