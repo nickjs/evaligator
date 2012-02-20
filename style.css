@@ -50,9 +50,9 @@ pre {
 }
 
 .alligator{
-  font-family: Georgia;
+  font-family: Courier, MonoSpace;
   text-align: center;
-  font-size: 22px;
+  font-size: 30px;
   letter-spacing: -2px;
 }
 
