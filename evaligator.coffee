@@ -144,7 +144,7 @@ class SourceCodeParser
     @BLOCK_MODE_GO = false
 
   transmogrifyIfStatement: (node) ->
-  
+
     for blockNode in @getAllNodesOfType(node, "Block")
       @recursivelyTransmogrifyAllTheThings blockNode
     false
@@ -306,14 +306,14 @@ class SourceTransmogrifier
   loopDeclaration: (lineNumber) ->
     if @useProtection
       @source[lineNumber] = "var __LOOP_CONDOM__ = 0; " + @source[lineNumber]
-      
+
 
   putACondomOnThisLoop: (lineNumber) ->
     if @useProtection
       @source[lineNumber] += "if (++__LOOP_CONDOM__ > #{__MAX_PROTECTED_ITERATIONS__}){ break; }"
 
   iterationAssignment: (lineNumber, variableName) ->
-    @source[lineNumber] += "__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
+    @source[lineNumber] += "\n__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
 
   functionDeclaration: (lineNumber) ->
     line = @source[lineNumber]
