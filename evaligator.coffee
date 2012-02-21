@@ -17,7 +17,8 @@ class SourceCodeParser
     entireSyntaxTree = Parser.Parser.parse text
     @recursivelyTransmogrifyAllTheThings entireSyntaxTree
 
-    @transmogrifier.run()
+    window.ALL_YOUR_PARAMETERS_IS_BELONG_TO_ME?(@variableMap)
+    window.ASK_ME_FOR_ALL_MY_PARAMETERS?(@variableMap)
 
 
   ###########################################
@@ -92,10 +93,11 @@ class SourceCodeParser
     # HEY NICK LISTEN LISTEN do something with the return statement here
 
     for identifierName in identifierNames || []
-      @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName
+      @variableMap.variableOnLineNumberWithName node.lineNumber, identifierName, isFunctionParameter: yes
 
     @transmogrifier.functionDeclaration node.lineNumber
     @recursivelyTransmogrifyAllTheThings @getAllNodesOfType(node, "FunctionBody")[0]
+
     false
 
   # what follows is mega gross because for loops are complicated
@@ -197,22 +199,61 @@ class VariableMapper
   constructor: ->
     @allTheLines = []
 
-  variableOnLineNumberWithName: (lineNumber, identifier) ->
+  variableOnLineNumberWithName: (lineNumber, identifier, options) ->
     variablesForThisLine = @allTheLines[lineNumber] ||= []
     for variable in variablesForThisLine
       if variable?.identifier is identifier
-        return variable
+        break
+      else
+        variable = null
 
-    variablesForThisLine.push variable = identifier: identifier, value: undefined
+    variablesForThisLine.push(variable = identifier: identifier, value: undefined, lineNumber: lineNumber) if not variable
+
+    if options
+      for key, value of options
+        variable[key] = value
+
     variable
+
+  argumentsForFunction: (lineNumber) -> #
+    variablesForThisLine = @allTheLines[lineNumber]
+    results = [] # we use our own array instead of the comprehension because coffeescript would also push elements that fail the if
+    if variablesForThisLine
+      for variable in variablesForThisLine
+        if variable?.isFunctionParameter
+          results.push variable.value
+
+    results
+
+  allFunctionParameters: ->
+    results = []
+    for line in @allTheLines
+      continue if not line
+      thisFunction = null
+      for variable in line
+        if variable?.isFunctionParameter
+          (thisFunction ||= []).push variable
+
+      results.push(thisFunction) if thisFunction
+    results
+
 
   assignValue: (lineNumber, identifier, value) ->
     variable = @variableOnLineNumberWithName lineNumber, identifier
-    variable.value = @makeTheValuePretty(value)
+    variable.value = value
+
+  assignValueIfIdentifierExists: (lineNumber, identifier, value) ->
+    if line = @allTheLines[lineNumber]
+      for variable in line
+        if variable?.identifier is identifier
+          @assignValue arguments...
+          return true
+
+    false
 
   iterateValue: (lineNumber, identifier, value) ->
     variable = @variableOnLineNumberWithName lineNumber, identifier
-    (variable.iterations ||= []).push @makeTheValuePretty(value)
+    (variable.iterations ||= []).push value
 
   makeTheValuePretty: (value) ->
     switch Object.prototype.toString.call(value).slice(8, -1)
@@ -231,7 +272,7 @@ class VariableMapper
     result = for line in @allTheLines
       if line
         textForThisLine = for variable in line
-          "#{variable.identifier} = #{variable.iterations?.join(' | ') || variable.value}"
+          "#{variable.identifier} = #{variable.iterations?.map((value) => @makeTheValuePretty(value)).join(' | ') || @makeTheValuePretty(variable.value)}"
         textForThisLine.join " ; "
     result.join "\n"
 
@@ -247,8 +288,9 @@ class SourceTransmogrifier
       """
         try{
           #{@source.join("\n")}
-          for(var __i__ = 0, __count__ = __FUNCTION_MAP__.length; __i__ < __count__; __i__++)
-            __FUNCTION_MAP__[__i__]();
+          for(var _i = 0, _count = __FUNCTION_MAP__.length, _f; _i < _count && (_f = __FUNCTION_MAP__[_i] || true); _i++)
+            if (typeof _f === 'function')
+              _f.apply(null, __VARIABLE_MAP__.argumentsForFunction(_i));
         } catch(e) {}
       """
 
@@ -276,7 +318,7 @@ class SourceTransmogrifier
   functionDeclaration: (lineNumber) ->
     line = @source[lineNumber]
     index = line.indexOf 'function'
-    @source[lineNumber] = line.substr(0, index) + " __FUNCTION_MAP__[__FUNCTION_MAP__.length] = " + line.substr(index)
+    @source[lineNumber] = line.substr(0, index) + " __FUNCTION_MAP__[#{lineNumber}] = " + line.substr(index)
 
 # export ALL the things
 window.SourceCodeParser = SourceCodeParser

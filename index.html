@@ -5,7 +5,8 @@
   <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
 </head>
 <body>
-  <div id="transmogrifier-debug-output" style="position:absolute;left:0;top:0;background-color:#fff;font-family:Menlo"></div>
+  <div id="transmogrifier-debug-output" style="background-color:#fff;font-family:Menlo"></div>
+  <div id="parameter-debug-input" style="display:hidden"></div>
 
   <div class="pageTitle">evaligator.js<br/>
     <span class="alligator">^^^^^U^^^U^=___ </span>
@@ -15,7 +16,7 @@
     <h1>What it is</h1>
     <p>CoffeeScript thingamajig. As you type javascript code on the left, it gets automagically evaluated on the right.</p>
     <p>Start typing things below. Or,
-    <input type="button" class="button" value="load" onClick="loadExample();"> an example.
+    <input type="button" class="button" value="load" onClick="Editor.loadExample();"> an example.
     And then type things.</p>
   </div>
 
@@ -37,25 +38,39 @@
   <script src="evaligator.coffee" type="text/coffeescript"></script>
 
   <script type="text/coffeescript">
-    window.DEBUG_THE_EVALIGATOR = window.location.hash.toLowerCase().indexOf('debug') isnt -1
-    
-    @loadExample = ->
-      # initialize the editor with some random stuff
-      sampleCode = """
-      var a = 0;
-      var b = a;
+    if window.DEBUG_THE_EVALIGATOR = window.location.hash.toLowerCase().indexOf('debug') isnt -1
+      document.getElementById('parameter-debug-input').style.display = 'block'
 
-      var arr = ['tuna', 'fish'];
-      var allTheOddThings = '';
+      paramCacheOfDoom = []
 
-      for (var i = 0; i < 2 * arr.length; i++){
-           b += i;
-           if (b % 2 != 0){
-              allTheOddThings += b + ', ';
-           }
-      }"""
+      window.ASK_ME_FOR_ALL_MY_PARAMETERS = (me) ->
+        container = document.getElementById('parameter-debug-input')
+        container.innerHTML = ''
 
-      window.Editor.split.getEditor(0).getSession().setValue sampleCode
+        for theFunction, i in me.allFunctionParameters()
+          elem = document.createElement 'div'
+          elem.innerHTML = "Function #{i} -> "
+          for param in theFunction
+            span = document.createElement 'span'
+            span.innerHTML = "#{param.identifier}:"
+            elem.appendChild span
+
+            paramElem = document.createElement 'input'
+            paramElem.placeholder = param.identifier
+            paramElem.value = param.value
+            paramElem.style.fontSize = '1.2em'
+            paramElem.style.width = '80px'
+            do (param, paramElem) ->
+              paramElem.onkeyup = ->
+                paramCacheOfDoom.push valueArguments = [param.lineNumber, param.identifier, (new Function("try { return #{paramElem.value}; } catch(e) {}"))()]
+                me.assignValue.apply me, valueArguments
+                Editor.refreshViewer()
+            elem.appendChild paramElem
+          container.appendChild elem
+
+        window.ALL_YOUR_PARAMETERS_IS_BELONG_TO_ME = (me) ->
+          for valueArguments in paramCacheOfDoom
+            me.assignValueIfIdentifierExists.apply me, valueArguments
 
     class EditorView
       EditSession = require('ace/edit_session').EditSession
@@ -81,18 +96,40 @@
 
         @editor.focus()
 
+        @codeParser = new SourceCodeParser
+
         window.addEventListener 'resize', =>
           @split.resize()
 
         @editor.getSession().on 'change', =>
           theHopefullyNotArbitraryTextThatWasTyped = @editor.getSession().getDocument().getValue()
+          @codeParser.parseThemSourceCodes theHopefullyNotArbitraryTextThatWasTyped, true
 
-          codeParser = new SourceCodeParser
-          codeParser.parseThemSourceCodes theHopefullyNotArbitraryTextThatWasTyped, true
+          @refreshViewer()
 
-          @split.getEditor(1).getSession().setValue codeParser.displayValue()
+      refreshViewer: ->
+        @codeParser.transmogrifier.run()
+        @viewer.getSession().setValue @codeParser.displayValue()
 
+      loadExample: ->
+        # initialize the editor with some random stuff
+        sampleCode =
+        """
+          var a = 0;
+          var b = a;
 
+          var arr = ['tuna', 'fish'];
+          var allTheOddThings = '';
+
+          for (var i = 0; i < 2 * arr.length; i++){
+               b += i;
+               if (b % 2 != 0){
+                  allTheOddThings += b + ', ';
+               }
+          }
+        """
+
+        @editor.getSession().setValue sampleCode
 
     window.Editor = new EditorView document.getElementById('editor')
 </script>
