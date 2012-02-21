@@ -178,6 +178,64 @@ test "while ALL the things, part 2", ->
 ###########################################
 #### infinite loops
 ###########################################
+test "to infinity and beyond part 1", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var a = 0;
+  for (i = 0; i < 50; i++){
+      a = i;
+  }
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  longResult = """
+  a = 0
+  i = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  a = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+  """
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
+
+test "to infinity and beyond part 2", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var i = 0
+  var a = 0
+  while (i >= 0){
+      a = i
+  }
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  longResult = """
+  i = 0
+  a = 0
+  i = 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0
+  a = 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0
+  """
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
+
+test "to infinity and beyond part 3", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var a = 0;
+  var i = 0
+  for (;;i++){
+    a = i;
+  }
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  longResult = """
+  a = 0
+  i = 0
+  i = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  a = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+  """
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
+
 
 ###########################################
 #### functions
