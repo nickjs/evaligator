@@ -90,7 +90,7 @@ exports.cssText = "\
 }\
 \
 .ace-monokai .ace_marker-layer .ace_active_line {\
-  background: #49483E;\
+  background: #333;\
 }\
 \
 .ace-monokai .ace_marker-layer .ace_selected_word {\
@@ -164,4 +164,4 @@ dom.importCssString(exports.cssText, exports.cssClass);
                         ace[key] = a[key];
                 });
             })();
-        
+

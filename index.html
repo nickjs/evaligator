@@ -72,8 +72,12 @@
         @editor = @split.getEditor(0)
         @editor.getSession().setMode new Mode
         @editor.getSession().setUndoManager new UndoManager
-        @split.getEditor(1).getSession().setMode workerlessMode
-        @split.getEditor(1).setReadOnly yes
+
+        @viewer = @split.getEditor(1)
+        @viewer.getSession().setMode workerlessMode
+        @viewer.setHighlightActiveLine no
+        @viewer.setShowPrintMargin no
+        @viewer.setReadOnly yes
 
         @editor.focus()
 
