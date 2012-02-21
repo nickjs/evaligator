@@ -26,16 +26,21 @@ class SourceCodeParser
   ###########################################
 
   recursivelyTransmogrifyAllTheThings: (node) ->
-    return unless node;
+    if node.name is '%start'
+      return @allIsGood = false
+    else
+      @allIsGood = true
 
     parseChildren = @transmogrifyNode node
-    return if parseChildren isnt true
+    return true if parseChildren isnt true
 
     children = node.children
-    return unless children
+    return true unless children
 
     for childNode in children
-      @recursivelyTransmogrifyAllTheThings childNode
+      return if not @recursivelyTransmogrifyAllTheThings childNode
+
+    true
 
   transmogrifyNode: (node) ->
     transmogrifyFunction = @["transmogrify#{node.name}"]
@@ -288,7 +293,7 @@ class SourceTransmogrifier
       """
         try{
           #{@source.join("\n")}
-          for(var _i = 0, _count = __FUNCTION_MAP__.length, _f; _i < _count && (_f = __FUNCTION_MAP__[_i] || true); _i++)
+          ;for(var _i = 0, _count = __FUNCTION_MAP__.length, _f; _i < _count && (_f = __FUNCTION_MAP__[_i] || true); _i++)
             if (typeof _f === 'function')
               _f.apply(null, __VARIABLE_MAP__.argumentsForFunction(_i));
         } catch(e) {}
@@ -301,11 +306,11 @@ class SourceTransmogrifier
       winningVariableMap = @variableMap
 
   variableAssignment: (lineNumber, variableName) ->
-    @source[lineNumber] += "\n__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
+    @source[lineNumber] += ";\n__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
 
   loopDeclaration: (lineNumber) ->
     if @useProtection
-      @source[lineNumber] = "var __LOOP_CONDOM__ = 0; " + @source[lineNumber]
+      @source[lineNumber] = ";var __LOOP_CONDOM__ = 0; " + @source[lineNumber]
 
 
   putACondomOnThisLoop: (lineNumber) ->
@@ -313,7 +318,7 @@ class SourceTransmogrifier
       @source[lineNumber] += "if (++__LOOP_CONDOM__ > #{__MAX_PROTECTED_ITERATIONS__}){ break; }"
 
   iterationAssignment: (lineNumber, variableName) ->
-    @source[lineNumber] += "\n__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
+    @source[lineNumber] += ";\n__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
 
   functionDeclaration: (lineNumber) ->
     line = @source[lineNumber]

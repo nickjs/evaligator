@@ -64,7 +64,7 @@
               paramElem.onkeyup = ->
                 paramCacheOfDoom.push valueArguments = [param.lineNumber, param.identifier, (new Function("try { return #{paramElem.value}; } catch(e) {}"))()]
                 me.assignValue.apply me, valueArguments
-                Editor.refreshViewer()
+                Editor.refreshViewer(true)
             elem.appendChild paramElem
           container.appendChild elem
 
@@ -107,8 +107,9 @@
 
           @refreshViewer()
 
-      refreshViewer: ->
-        @codeParser.transmogrifier.run()
+      refreshViewer: (needsRun) ->
+        return if not @codeParser.allIsGood
+        @codeParser.transmogrifier.run() if needsRun
         @viewer.getSession().setValue @codeParser.displayValue()
 
       loadExample: ->
