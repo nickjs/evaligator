@@ -69,11 +69,12 @@
         workerlessMode = new Mode
         workerlessMode.createWorker = ->
 
-        @split.getEditor(0).getSession().setMode new Mode
+        @editor = @split.getEditor(0)
+        @editor.getSession().setMode new Mode
+        @editor.getSession().setUndoManager new UndoManager
         @split.getEditor(1).getSession().setMode workerlessMode
         @split.getEditor(1).setReadOnly yes
 
-        @editor = @split.getEditor(0)
         @editor.focus()
 
         window.addEventListener 'resize', =>
