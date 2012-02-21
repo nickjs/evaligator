@@ -13,36 +13,52 @@ class SourceCodeParser
     @variableMap = new VariableMapper
 
     @transmogrifier = new SourceTransmogrifier text, @variableMap, useProtection
-
     entireSyntaxTree = Parser.Parser.parse text
+
+    # if this invalid, don't bother parsing anything
+    allIsGood = @isSyntaxTreeValid(entireSyntaxTree)
+    return false unless allIsGood
+
     @recursivelyTransmogrifyAllTheThings entireSyntaxTree
 
     window.ALL_YOUR_PARAMETERS_IS_BELONG_TO_ME?(@variableMap)
     window.ASK_ME_FOR_ALL_MY_PARAMETERS?(@variableMap)
 
-    @transmogrifier.run()
+    return true
 
+  isSyntaxTreeValid: (node) ->
+    # if the tree isn't valid, one of the immediate children's name will be %start
+    if !node 
+      return true
+    
+    if node.name is "%start"
+      return false
+    
+    children = node.children
+    return true unless children
+
+    for childNode in children
+      if childNode.name is "%start"
+        return false
+
+    return true
 
   ###########################################
   #### Transmogrify = parse + eval a node
   ###########################################
 
   recursivelyTransmogrifyAllTheThings: (node) ->
-    if node.name is '%start'
-      return @allIsGood = false
-    else
-      @allIsGood = true
+    # invalid nodes are named %start and should tell you to abandon all hope
+    return unless node
 
     parseChildren = @transmogrifyNode node
-    return true if parseChildren isnt true
+    return if parseChildren isnt true
 
     children = node.children
-    return true unless children
+    return unless children
 
     for childNode in children
-      return if not @recursivelyTransmogrifyAllTheThings childNode
-
-    true
+      @recursivelyTransmogrifyAllTheThings childNode
 
   transmogrifyNode: (node) ->
     transmogrifyFunction = @["transmogrify#{node.name}"]
@@ -130,7 +146,7 @@ class SourceCodeParser
     @transmogrifier.putACondomOnThisLoop node.lineNumber # prevent infinite loops if needed
 
     blockNode = @getAllNodesOfType(node, "Block")?[0]
-    @recursivelyTransmogrifyAllTheThings blockNode if blockNode?
+    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
 
     @BLOCK_MODE_GO = false
 
@@ -151,7 +167,6 @@ class SourceCodeParser
     @BLOCK_MODE_GO = false
 
   transmogrifyIfStatement: (node) ->
-
     for blockNode in @getAllNodesOfType(node, "Block")
       @recursivelyTransmogrifyAllTheThings blockNode
     false
@@ -284,7 +299,7 @@ class VariableMapper
     result.join "\n"
 
 class SourceTransmogrifier
-  __MAX_PROTECTED_ITERATIONS__ = 10
+  maxProtectedIterations = 10
 
   constructor: (@text, @variableMap, @useProtection) ->
     @source = @text.split /[\n|\r]/
@@ -312,12 +327,12 @@ class SourceTransmogrifier
 
   loopDeclaration: (lineNumber) ->
     if @useProtection
-      @source[lineNumber] = ";var __LOOP_CONDOM__ = 0; " + @source[lineNumber]
+      @source[lineNumber] = ";var __LOOP_COUNTER__ = 0; " + @source[lineNumber]
 
 
   putACondomOnThisLoop: (lineNumber) ->
     if @useProtection
-      @source[lineNumber] += "if (++__LOOP_CONDOM__ > #{__MAX_PROTECTED_ITERATIONS__}){ break; }"
+      @source[lineNumber] += "if (++__LOOP_COUNTER__ > #{maxProtectedIterations}){ break; }"
 
   iterationAssignment: (lineNumber, variableName) ->
     @source[lineNumber] += ";\n__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"

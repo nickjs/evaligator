@@ -68,7 +68,7 @@
             paramElem.onkeyup = ->
               paramCacheOfDoom.push valueArguments = [param.lineNumber, param.identifier, (new Function("try { return #{paramElem.value}; } catch(e) {}"))()]
               me.assignValue.apply me, valueArguments
-              Editor.refreshViewer(true)
+              Editor.refreshViewer()
           elem.appendChild paramElem
         container.appendChild elem
 
@@ -107,13 +107,15 @@
 
         @editor.getSession().on 'change', =>
           theHopefullyNotArbitraryTextThatWasTyped = @editor.getSession().getDocument().getValue()
-          @codeParser.parseThemSourceCodes theHopefullyNotArbitraryTextThatWasTyped, true
 
-          @refreshViewer()
+          treeIsValid = @codeParser.parseThemSourceCodes theHopefullyNotArbitraryTextThatWasTyped, true
+        
+          if (treeIsValid)
+              @refreshViewer()
 
-      refreshViewer: (needsRun) ->
-        return if not @codeParser.allIsGood
-        @codeParser.transmogrifier.run() if needsRun
+
+      refreshViewer: () ->
+        @codeParser.transmogrifier.run()
         @viewer.getSession().setValue @codeParser.displayValue()
 
       loadExample: ->
