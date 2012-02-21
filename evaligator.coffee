@@ -20,6 +20,8 @@ class SourceCodeParser
     window.ALL_YOUR_PARAMETERS_IS_BELONG_TO_ME?(@variableMap)
     window.ASK_ME_FOR_ALL_MY_PARAMETERS?(@variableMap)
 
+    @transmogrifier.run()
+
 
   ###########################################
   #### Transmogrify = parse + eval a node

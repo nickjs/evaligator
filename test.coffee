@@ -100,4 +100,4 @@ test "function definitions part 2", ->
 test "var function definitions part 1", ->
   @monkey = new SourceCodeParser
   @monkey.parseThemSourceCodes("var f = function f(x, y) { }")
-  equal @monkey.displayValue().trim(), "x = undefined ; y = undefined ; f = function f(x, y) { }"
+  equal @monkey.displayValue().trim(), "x = undefined ; y = undefined"
