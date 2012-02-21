@@ -38,7 +38,7 @@
 
   <script type="text/coffeescript">
     window.DEBUG_THE_EVALIGATOR = window.location.hash.toLowerCase().indexOf('debug') isnt -1
-
+    
     @loadExample = ->
       # initialize the editor with some random stuff
       sampleCode = """
@@ -88,7 +88,7 @@
           theHopefullyNotArbitraryTextThatWasTyped = @editor.getSession().getDocument().getValue()
 
           codeParser = new SourceCodeParser
-          codeParser.parseThemSourceCodes theHopefullyNotArbitraryTextThatWasTyped
+          codeParser.parseThemSourceCodes theHopefullyNotArbitraryTextThatWasTyped, true
 
           @split.getEditor(1).getSession().setValue codeParser.displayValue()
 
