@@ -236,6 +236,67 @@ test "to infinity and beyond part 3", ->
     monkey.transmogrifier.run()
     equal monkey.displayValue().trim(), longResult
 
+###########################################
+#### infinitely many infinite loops
+###########################################
+test "to infinity and beyond infinitely many times, part 1", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var a = 0;
+    for (var i = 0; i < 30; i++){
+        a = i;
+    }
+    a++;
+    var b = 0;
+    while (a < 100){
+        b++
+    }
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  longResult = """
+  a = 0
+  i = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  a = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+  a = 10
+  b = 0
+  a = 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10
+  b = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  """
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
+
+test "to infinity and beyond infinitely many times, part 1", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var x = 0;
+  for (var i = 0; i < 50; i++){
+      var a = i    
+  }
+  while(a < 1000){
+      a++    
+  }
+  while(a < 1000){
+      x++    
+  }
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  longResult = """
+  x = 0
+  i = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  a = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+  a = 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18
+  a = 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19
+
+  a = 19 | 19 | 19 | 19 | 19 | 19 | 19 | 19 | 19 | 19
+  x = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  """
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
+
 
 ###########################################
 #### functions

@@ -143,7 +143,7 @@ class SourceCodeParser
     @BLOCK_MODE_GO = true
     for identifierName in identifierNames || []
       @assignValue node.lineNumber, identifierName
-    @transmogrifier.putACondomOnThisLoop node.lineNumber # prevent infinite loops if needed
+    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
 
     blockNode = @getAllNodesOfType(node, "Block")?[0]
     @recursivelyTransmogrifyAllTheThings blockNode if blockNode
@@ -160,7 +160,7 @@ class SourceCodeParser
     @transmogrifier.loopDeclaration node.lineNumber
 
     @BLOCK_MODE_GO = true
-    @transmogrifier.putACondomOnThisLoop node.lineNumber # prevent infinite loops if needed
+    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
     @assignValue node.lineNumber, identifierNames[0] if expressionNode?[0]
     blockNode = @getAllNodesOfType(node, "Block")?[0]
     @recursivelyTransmogrifyAllTheThings blockNode
@@ -308,6 +308,7 @@ class SourceTransmogrifier
   run: ->
     compiledSource =
       """
+        __INF_LOOP_BUBBLE_WRAP__ = []; __NUM_LOOPS_WRAPPED__ = 0;
         try{
           #{@source.join("\n")}
           ;for(var _i = 0, _count = __FUNCTION_MAP__.length, _f; _i < _count && (_f = __FUNCTION_MAP__[_i] || true); _i++)
@@ -327,12 +328,13 @@ class SourceTransmogrifier
 
   loopDeclaration: (lineNumber) ->
     if @useProtection
-      @source[lineNumber] = ";var __LOOP_COUNTER__ = 0; " + @source[lineNumber]
+      @source[lineNumber] = ";__INF_LOOP_BUBBLE_WRAP__[__NUM_LOOPS_WRAPPED__] = 0; " + @source[lineNumber]
 
 
-  putACondomOnThisLoop: (lineNumber) ->
+  bubbleWrapThisLoop: (lineNumber) ->
     if @useProtection
-      @source[lineNumber] += "if (++__LOOP_COUNTER__ > #{maxProtectedIterations}){ break; }"
+      @source[lineNumber] += "if (++(__INF_LOOP_BUBBLE_WRAP__[__NUM_LOOPS_WRAPPED__]) > #{maxProtectedIterations}){ break; }"
+      ++__NUM_LOOPS_WRAPPED__ ## we've protected this loop, ready for the next one!
 
   iterationAssignment: (lineNumber, variableName) ->
     @source[lineNumber] += ";\n__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
