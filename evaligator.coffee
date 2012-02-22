@@ -12,6 +12,7 @@ class SourceCodeParser
   parseThemSourceCodes: (text, useProtection=true) ->
     @variableMap = new VariableMapper
 
+
     @transmogrifier = new SourceTransmogrifier text, @variableMap, useProtection
     entireSyntaxTree = Parser.Parser.parse text
 
@@ -304,10 +305,13 @@ class SourceTransmogrifier
   constructor: (@text, @variableMap, @useProtection) ->
     @source = @text.split /[\n|\r]/
     @functionMap = []
+    @numLoopsWrapped = 0
 
   run: ->
+    @numLoopsWrapped = 0
     compiledSource =
       """
+        __INF_LOOP_BUBBLE_WRAP__ = [];
         try{
           #{@source.join("\n")}
           ;for(var _i = 0, _count = __FUNCTION_MAP__.length, _f; _i < _count && (_f = __FUNCTION_MAP__[_i] || true); _i++)
@@ -327,13 +331,13 @@ class SourceTransmogrifier
 
   loopDeclaration: (lineNumber) ->
     if @useProtection
-      @source[lineNumber] = ";__INF_LOOP_BUBBLE_WRAP__[__NUM_LOOPS_WRAPPED__] = 0; " + @source[lineNumber]
+      @source[lineNumber] = ";__INF_LOOP_BUBBLE_WRAP__[#{@numLoopsWrapped}] = 0; " + @source[lineNumber]
 
 
   bubbleWrapThisLoop: (lineNumber) ->
     if @useProtection
-      @source[lineNumber] += "if (++(__INF_LOOP_BUBBLE_WRAP__[__NUM_LOOPS_WRAPPED__]) > #{maxProtectedIterations}){ break; }"
-      ++__NUM_LOOPS_WRAPPED__ ## we've protected this loop, ready for the next one!
+      @source[lineNumber] += "if (++(__INF_LOOP_BUBBLE_WRAP__[#{@numLoopsWrapped}]) > #{maxProtectedIterations}){ break; }"
+      ++@numLoopsWrapped  # we've protected this loop, ready for the next one!
 
   iterationAssignment: (lineNumber, variableName) ->
     @source[lineNumber] += ";\n__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
