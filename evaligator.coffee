@@ -308,7 +308,6 @@ class SourceTransmogrifier
   run: ->
     compiledSource =
       """
-        __INF_LOOP_BUBBLE_WRAP__ = []; __NUM_LOOPS_WRAPPED__ = 0;
         try{
           #{@source.join("\n")}
           ;for(var _i = 0, _count = __FUNCTION_MAP__.length, _f; _i < _count && (_f = __FUNCTION_MAP__[_i] || true); _i++)
