@@ -29,12 +29,12 @@ class SourceCodeParser
 
   isSyntaxTreeValid: (node) ->
     # if the tree isn't valid, one of the immediate children's name will be %start
-    if !node 
+    if !node
       return true
-    
+
     if node.name is "%start"
       return false
-    
+
     children = node.children
     return true unless children
 
@@ -314,10 +314,13 @@ class SourceTransmogrifier
         __INF_LOOP_BUBBLE_WRAP__ = [];
         try{
           #{@source.join("\n")}
-          ;for(var _i = 0, _count = __FUNCTION_MAP__.length, _f; _i < _count && (_f = __FUNCTION_MAP__[_i] || true); _i++)
-            if (typeof _f === 'function')
-              _f.apply(null, __VARIABLE_MAP__.argumentsForFunction(_i));
-        } catch(e) {}
+        } finally {
+          try {
+            for(var _i = 0, _count = __FUNCTION_MAP__.length, _f; _i < _count && (_f = __FUNCTION_MAP__[_i] || true); _i++)
+                if (typeof _f === 'function')
+                  _f.apply(null, __VARIABLE_MAP__.argumentsForFunction(_i));
+          } catch (e) {}
+        }
       """
 
     if window.DEBUG_THE_EVALIGATOR
