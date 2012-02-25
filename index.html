@@ -24,12 +24,14 @@
   <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
   </a>
 
+  <div id='functionInput' class='functionPop'></div>
+  
+
   <div class="textChunk">
     <h1>What is this?</h1>
     <p>CoffeeScript thingamalligator that noms your javascript code as you type it, and evaluates it.
 
-    <p>To get things going, start typing some code in the right editor below. Or load one of the examples. <br/>
-    And then feed the evaligator.</p>
+    <p>To get things going, start typing some code in the right editor below. Or load one of the examples. And then feed the evaligator.</p>
 
     <h1>Ok, you play with it:</h1>
   </div>
@@ -66,26 +68,19 @@
       container = document.getElementById('parameter-debug-input')
       container.innerHTML = ''
 
-      for theFunction, i in me.allFunctionParameters()
-        elem = document.createElement 'div'
-        elem.innerHTML = "Function #{i} -> "
-        for param in theFunction
-          span = document.createElement 'span'
-          span.innerHTML = "#{param.identifier}:"
-          elem.appendChild span
+      currentViewerAnnotations = []
 
-          paramElem = document.createElement 'input'
-          paramElem.placeholder = param.identifier
-          paramElem.value = param.value
-          paramElem.style.fontSize = '1.2em'
-          paramElem.style.width = '80px'
-          do (param, paramElem) ->
-            paramElem.onkeyup = ->
-              paramCacheOfDoom.push valueArguments = [param.lineNumber, param.identifier, (new Function("try { return #{paramElem.value}; } catch(e) {}"))()]
-              me.assignValue.apply me, valueArguments
-              Editor.refreshViewer()
-          elem.appendChild paramElem
-        container.appendChild elem
+      for theFunction, i in me.allFunctionParameters()
+        # add an annotation on this line        
+        newAnnotation = { 
+                row: theFunction[i].lineNumber, 
+                column: i, 
+                text: "Function definition", 
+                type: "info"
+        }
+        currentViewerAnnotations.push(newAnnotation)
+
+      Editor.viewer.getSession().setAnnotations(currentViewerAnnotations)
 
       window.ALL_YOUR_PARAMETERS_IS_BELONG_TO_ME = (me) ->
         for valueArguments in paramCacheOfDoom
@@ -96,8 +91,6 @@
       UndoManager = require('ace/undomanager').UndoManager
       Split = require('ace/split').Split
       Mode = require('ace/mode/javascript').Mode
-
-      currentViewerAnnotations = []
 
       constructor: (node) ->
         @split = new Split node, require('ace/theme/monokai'), 2
@@ -123,7 +116,59 @@
         window.addEventListener 'mouseup', (e) -> 
           if e.target.title is 'Function definition'
             e.stopPropagation() 
-            alert("you clicked a function definition on line " + e.target.innerHTML)
+
+            variableMap = Editor.codeParser.variableMap
+            theFunction = Editor.codeParser.variableMap.allFunctionParameters();
+
+            debugger
+            container = document.getElementById('functionInput')
+            container.innerHTML = ''
+            container.style.display = 'block'
+
+            elem = document.createElement 'div'
+            elem.innerHTML = "Function input:"
+
+            elem.style.padding = '5px' 
+
+            for param in theFunction[0]
+              outer = document.createElement 'div'
+              span = document.createElement 'span'
+              span.innerHTML = "#{param.identifier}: "
+              outer.style.padding = '5px 0 0px 0' # top right bottom left
+
+              
+              outer.appendChild span
+              elem.appendChild outer
+
+              paramElem = document.createElement 'input'
+              paramElem.placeholder = param.identifier
+              paramElem.value = param.value
+              paramElem.style.fontSize = '1.2em'
+              paramElem.style.width = '80px'
+              
+              do (param, paramElem) ->
+                paramElem.onkeyup = ->
+                  paramCacheOfDoom.push valueArguments = [param.lineNumber, param.identifier, (new Function("try { return #{paramElem.value}; } catch(e) {}"))()]
+                  variableMap.assignValue.apply variableMap, valueArguments
+                  Editor.refreshViewer()
+              
+              outer.appendChild paramElem
+
+            container.appendChild elem
+
+            closeBtn = document.createElement 'input'
+            closeBtn.value = 'Close'
+            closeBtn.type = 'button'
+            closeBtn.addEventListener 'click', =>
+              container.style.display = 'none'
+
+            container.appendChild closeBtn
+
+            container.style.left = e.pageX - container.clientWidth / 2
+            container.style.top  = e.pageY - container.clientHeight / 2
+
+
+
 
         window.addEventListener 'resize', =>
           @split.resize()
@@ -136,26 +181,14 @@
               @refreshViewer()
 
         @viewer.getSession().on 'change', (e)=>
+
+
           
-
-      displayViewerAnnotations: () ->
-        newAnnotation = { 
-                row: @editor.getCursorPosition().row, 
-                column: @editor.getCursorPosition().column, 
-                text: "Function definition", 
-                type: "info" 
-        }
-
-        # node: setAnnotations clears everything first. and randomly, and i hate it
-        currentViewerAnnotations.push(newAnnotation)
-
-        @viewer.getSession().setAnnotations(currentViewerAnnotations)
-
-
       refreshViewer: () ->
         @codeParser.transmogrifier.run()
         @viewer.getSession().setValue @codeParser.displayValue()
-        @displayViewerAnnotations()
+
+
 
       loadExample: (whichExample) ->
         # initialize the editor with some random stuff
