@@ -5,42 +5,49 @@
   <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
 </head>
 <body>
-  <div id="transmogrifier-debug-output" style="background-color:#fff;font-family:Menlo"></div>
-  <div id="parameter-debug-input" style="display:hidden"></div>
-
-  <div class="pageTitle">evaligator.js<br/>
-    <span class="alligator">^^^^^U^^^U^=___ </span>
+  <div class="header">
+    <img class="omnom" src="img/omnom.png">
+    <div class="pageTitle"><b>evaligator</b>.js</div>
+      <ul id="nav">
+        <li><a href='index.html'>overview</a></li>
+        <li><a href='#'>load an example</a>
+          <ul>
+            <li><a href="#" id="ex1" onClick="Editor.loadExample(1);">variables</a></li>
+            <li><a href="#" id="ex1" onClick="Editor.loadExample(2);">loops</a></li>
+            <li><a href="#" id="ex1" onClick="Editor.loadExample(3);">functions</a></li>
+          </ul>
+        </li>
+    </ul>
   </div>
+    
+  <a href="https://github.com/nciagra/evaligator">
+  <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
+  </a>
 
-  <div class="notEditor">
-    <h1>What it is</h1>
-    <p>CoffeeScript thingamajig. As you type javascript code on the left, it gets automagically evaluated on the right.</p>
-    <p>Start typing things below. Or,
-    <input type="button" class="button" value="load" onClick="Editor.loadExample();"> an example.
-    And then type things.</p>
+  <div class="textChunk">
+    <h1>What is this?</h1>
+    <p>CoffeeScript thingamalligator that noms your javascript code as you type it, and evaluates it.
+
+    <p>To get things going, start typing some code in the right editor below. Or load one of the examples. <br/>
+    And then feed the evaligator.</p>
+
+    <h1>Ok, you play with it:</h1>
   </div>
 
   <div id="editor"></div>
 
-  <div class="notEditor">
-    <h1>Stuff that works</h1>
-    <p>Variables, assignments, loops, if statements, changing the value of a variable somewhere and seeing the change propagate everywhere, js syntax errors (thanks ace!)</p>
+  <div id="parameter-debug-input" style="display:hidden"></div>
 
-    <h1>Stuff that doesn't</h1>
-    <p>things that make it go into infinite loops, asking it to do the dishes, functions</p>
 
+  <div class="textChunk">
     <h1>Now, the important bits</h1>
     <p>slapshoddily assembled by <a href="http://twitter.com/nciagra">nick</a> and <a href="http://dinculescu.com">monica</a></p>
     <p>lovingly stolen from all the worried dreams of <a href="http://worrydream.com">bret victor</a></p>
     <p>begrudgingly using language.js from <a href="http://github.com/tolmasky">francisco tolmasky</a></p>
   </div>
 
-  <!--<style>
-  .ace_marker-layer warning { 
-    position: absolute; 
-    z-index: 4; 
-    background: rgb(181, 213, 255);
-  } -->
+
+ <div id="transmogrifier-debug-output" style="background-color:#fff;font-family:Menlo"></div>
 
   </style>
   <!-- <div id="visualismifier"></div> -->
@@ -150,9 +157,9 @@
         @viewer.getSession().setValue @codeParser.displayValue()
         @displayViewerAnnotations()
 
-      loadExample: ->
+      loadExample: (whichExample) ->
         # initialize the editor with some random stuff
-        sampleCode =
+        example1 = 
         """
           var a = 0;
           var b = a;
@@ -167,8 +174,31 @@
                }
           }
         """
+        example2 = 
+        """
+        var a = 0;
+          for (var i = 0; i < 30; i++){
+              a = i;
+          }
+          a++;
+          var b = 0;
+          while (a < 100){
+              b++
+          }
+        """
 
-        @editor.getSession().setValue sampleCode
+        example3 = 
+        """
+        var a = 0;
+        var f = function(x, y){
+          a += x;
+        }
+        """
+
+        switch whichExample
+            when 1 then @editor.getSession().setValue example1
+            when 2 then @editor.getSession().setValue example2
+            when 3 then @editor.getSession().setValue example3
 
     window.Editor = new EditorView document.getElementById('editor')
 </script>

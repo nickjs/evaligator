@@ -345,3 +345,5 @@ test "var function definitions part 1", ->
   if(allIsGood)
     monkey.transmogrifier.run()
     equal monkey.displayValue().trim(), "x = undefined ; y = undefined"
+
+
