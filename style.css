@@ -85,7 +85,7 @@ p{
   margin: 0;
   margin-top: 85px;
   padding: 0;
-  margin-right: 20px;
+  margin-right: 40px;
 }
 
 #nav li{
@@ -179,6 +179,27 @@ a:hover, a:focus, a:visited {
   -moz-border-radius: 6px;  
   border-radius: 6px;  
 }
+
+/***********************************
+* function popup
+***********************************/
+.functionPop {
+  background: #272822;
+  color: white;
+  font-size: 12px;
+  padding: 10px;
+  z-index: 20;
+  -moz-border-radius: 8px;
+  -webkit-border-radius: 8px;
+  border-radius: 8px;
+
+  position: absolute;
+  top: 200;
+  left: 700;
+
+  display:none;
+}
+
 
 /***********************************
 * misc
