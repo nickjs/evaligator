@@ -9,23 +9,24 @@
     <img class="omnom" src="img/omnom.png">
     <div class="pageTitle"><b>evaligator</b>.js</div>
       <ul id="nav">
-        <li><a href='index.html'>overview</a></li>
-        <li><a href='#'>load an example</a>
+        <li><a href="#">load an example</a>
           <ul>
-            <li><a href="#" id="ex1" onClick="Editor.loadExample(1);">variables</a></li>
-            <li><a href="#" id="ex1" onClick="Editor.loadExample(2);">loops</a></li>
-            <li><a href="#" id="ex1" onClick="Editor.loadExample(3);">functions</a></li>
+            <li><a href="#" onClick="Editor.loadExample('variables');">variables</a></li>
+            <li><a href="#" onClick="Editor.loadExample('loops');">loops</a></li>
+            <li><a href="#" onClick="Editor.loadExample('functions');">functions</a></li>
           </ul>
         </li>
+        <li><a href="#">fullscreen</a></li>
     </ul>
   </div>
-    
+
   <a href="https://github.com/nciagra/evaligator">
-  <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
+  <img style="position: absolute; top: 0; right: 0; border: 0; z-index: 0"
+  src="https://a248.e.akamai.net/assets.github.com/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
   </a>
 
   <div id='functionInput' class='functionPop'></div>
-  
+
 
   <div class="textChunk">
     <h1>What is this?</h1>
@@ -71,11 +72,11 @@
       currentViewerAnnotations = []
 
       for theFunction, i in me.allFunctionParameters()
-        # add an annotation on this line        
-        newAnnotation = { 
-                row: theFunction[i].lineNumber, 
-                column: i, 
-                text: "Function definition", 
+        # add an annotation on this line
+        newAnnotation = {
+                row: theFunction[i].lineNumber,
+                column: i,
+                text: "Function definition",
                 type: "info"
         }
         currentViewerAnnotations.push(newAnnotation)
@@ -112,15 +113,14 @@
 
         @codeParser = new SourceCodeParser
 
-        
-        window.addEventListener 'mouseup', (e) -> 
+
+        window.addEventListener 'mouseup', (e) ->
           if e.target.title is 'Function definition'
-            e.stopPropagation() 
+            e.stopPropagation()
 
             variableMap = Editor.codeParser.variableMap
             theFunction = Editor.codeParser.variableMap.allFunctionParameters();
 
-            debugger
             container = document.getElementById('functionInput')
             container.innerHTML = ''
             container.style.display = 'block'
@@ -128,7 +128,7 @@
             elem = document.createElement 'div'
             elem.innerHTML = "Function input:"
 
-            elem.style.padding = '5px' 
+            elem.style.padding = '5px'
 
             for param in theFunction[0]
               outer = document.createElement 'div'
@@ -136,7 +136,6 @@
               span.innerHTML = "#{param.identifier}: "
               outer.style.padding = '5px 0 0px 0' # top right bottom left
 
-              
               outer.appendChild span
               elem.appendChild outer
 
@@ -145,13 +144,13 @@
               paramElem.value = param.value
               paramElem.style.fontSize = '1.2em'
               paramElem.style.width = '80px'
-              
+
               do (param, paramElem) ->
                 paramElem.onkeyup = ->
                   paramCacheOfDoom.push valueArguments = [param.lineNumber, param.identifier, (new Function("try { return #{paramElem.value}; } catch(e) {}"))()]
                   variableMap.assignValue.apply variableMap, valueArguments
                   Editor.refreshViewer()
-              
+
               outer.appendChild paramElem
 
             container.appendChild elem
@@ -175,7 +174,7 @@
 
         @editor.getSession().on 'change', =>
           theHopefullyNotArbitraryTextThatWasTyped = @editor.getSession().getDocument().getValue()
-        
+
           treeIsValid = @codeParser.parseThemSourceCodes theHopefullyNotArbitraryTextThatWasTyped, true
           if (treeIsValid)
               @refreshViewer()
@@ -183,7 +182,7 @@
         @viewer.getSession().on 'change', (e)=>
 
 
-          
+
       refreshViewer: () ->
         @codeParser.transmogrifier.run()
         @viewer.getSession().setValue @codeParser.displayValue()
@@ -192,46 +191,55 @@
 
       loadExample: (whichExample) ->
         # initialize the editor with some random stuff
-        example1 = 
-        """
+        examples =
+          variables: """
+            var a = 0;
+            var b = a;
+
+            var arr = ['tuna', 'fish'];
+            var allTheOddThings = '';
+
+            for (var i = 0; i < 2 * arr.length; i++){
+                 b += i;
+                 if (b % 2 != 0){
+                    allTheOddThings += b + ', ';
+                 }
+            }
+          """
+
+          loops: """
           var a = 0;
-          var b = a;
-
-          var arr = ['tuna', 'fish'];
-          var allTheOddThings = '';
-
-          for (var i = 0; i < 2 * arr.length; i++){
-               b += i;
-               if (b % 2 != 0){
-                  allTheOddThings += b + ', ';
-               }
-          }
-        """
-        example2 = 
-        """
-        var a = 0;
-          for (var i = 0; i < 30; i++){
+            for (var i = 0; i < 30; i++) {
               a = i;
-          }
-          a++;
-          var b = 0;
-          while (a < 100){
-              b++
-          }
-        """
+            }
 
-        example3 = 
-        """
-        var a = 0;
-        var f = function(x, y){
-          a += x;
-        }
-        """
+            a++;
 
-        switch whichExample
-            when 1 then @editor.getSession().setValue example1
-            when 2 then @editor.getSession().setValue example2
-            when 3 then @editor.getSession().setValue example3
+            var b = 0;
+            while (a < 100) {
+              b++;
+            }
+          """
+
+          functions: """
+          var binarySearch = function(key, array) {
+            if (!key || !array) {
+              return false;
+            }
+
+            var low = 0;
+            var high = array.length - 1;
+            var mid = floor(high / 2);
+
+            var value;
+            while (1) {
+              value = array[mid];
+
+            }
+          }
+          """
+
+        @editor.getSession().setValue examples[whichExample]
 
     window.Editor = new EditorView document.getElementById('editor')
 </script>
