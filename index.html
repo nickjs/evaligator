@@ -14,6 +14,7 @@
             <li><a href="#" onClick="Editor.loadExample('variables');">variables</a></li>
             <li><a href="#" onClick="Editor.loadExample('loops');">loops</a></li>
             <li><a href="#" onClick="Editor.loadExample('functions');">functions</a></li>
+            <li><a href="#" onClick="Editor.loadExample('binarySearch');">binary search</a></li>
           </ul>
         </li>
         <li><a href="#">fullscreen</a></li>
@@ -119,22 +120,34 @@
             e.stopPropagation()
 
             variableMap = Editor.codeParser.variableMap
-            theFunction = Editor.codeParser.variableMap.allFunctionParameters();
+            functionList = Editor.codeParser.variableMap.allFunctionParameters();
 
             container = document.getElementById('functionInput')
             container.innerHTML = ''
-            container.style.display = 'block'
+            
+            elem = document.createElement 'p'
+            elem.innerHTML = "<b>Function parameters:<br/></b>"
+            container.appendChild elem
 
-            elem = document.createElement 'div'
-            elem.innerHTML = "Function input:"
+            # find the particular function where one param is on this line
+            thisLineNumber = e.target.innerHTML - 1 # 1-indexed
+            functionOnThisLine = null
+            for theFunction, i in functionList
+              # did we find it on a previous iteration?
+              break if functionOnThisLine isnt null
 
-            elem.style.padding = '5px'
+              for param in theFunction
+               if (param.lineNumber == thisLineNumber)
+                functionOnThisLine = theFunction
+                break;
 
-            for param in theFunction[0]
+            if (!functionOnThisLine)
+              return
+
+            for param in functionOnThisLine
               outer = document.createElement 'div'
               span = document.createElement 'span'
-              span.innerHTML = "#{param.identifier}: "
-              outer.style.padding = '5px 0 0px 0' # top right bottom left
+              span.innerHTML = "#{param.identifier} = "
 
               outer.appendChild span
               elem.appendChild outer
@@ -142,8 +155,9 @@
               paramElem = document.createElement 'input'
               paramElem.placeholder = param.identifier
               paramElem.value = param.value
-              paramElem.style.fontSize = '1.2em'
-              paramElem.style.width = '80px'
+              paramElem.style.fontSize = '10px'
+              paramElem.style.width = '120px'
+              paramElem.style.marginBottom = '10px'
 
               do (param, paramElem) ->
                 paramElem.onkeyup = ->
@@ -153,8 +167,7 @@
 
               outer.appendChild paramElem
 
-            container.appendChild elem
-
+            
             closeBtn = document.createElement 'input'
             closeBtn.value = 'Close'
             closeBtn.type = 'button'
@@ -162,10 +175,11 @@
               container.style.display = 'none'
 
             container.appendChild closeBtn
+            closeBtn.style.marginTop = '10px'
 
-            container.style.left = e.pageX - container.clientWidth / 2
+            container.style.display = 'block'
+            container.style.left = e.pageX - container.clientWidth + 10
             container.style.top  = e.pageY - container.clientHeight / 2
-
 
 
 
@@ -193,6 +207,9 @@
         # initialize the editor with some random stuff
         examples =
           variables: """
+            // hint: try adding more elements to the arr array
+            // or changing the bounds of the for loop
+
             var a = 0;
             var b = a;
 
@@ -208,6 +225,9 @@
           """
 
           loops: """
+          // hint: try changing the bounds of the for loop
+          // try making them infinite loops :)
+
           var a = 0;
             for (var i = 0; i < 30; i++) {
               a = i;
@@ -222,20 +242,48 @@
           """
 
           functions: """
-          var binarySearch = function(key, array) {
-            if (!key || !array) {
-              return false;
-            }
+          // hint: to test the function input parameters, click on the
+          // annotation on the line number of the function definition
+          // and assign a value to each parameter
 
+          var a;
+          var f = function(inputValueOne, inputValueTwo) {
+            a = x + y;
+          } 
+
+          var g = function(x,y) {
+            a = x + y;
+            return a;
+          } 
+
+          var b = g(3,7);
+          """
+
+          binarySearch: """
+          // hint: click on the annotation on line 4, and set:
+          // key = 'b'
+          // array = ['a', 'b', 'c', 'd', 'e', 'f']
+
+          var binarySearch = function(key, array) {
             var low = 0;
             var high = array.length - 1;
-            var mid = floor(high / 2);
+            
+            while (low <= high) {
+              var mid = floor((low + high)/2);
+              var value = array[mid];
 
-            var value;
-            while (1) {
-              value = array[mid];
-
+              if (value < key){
+                low = mid + 1;
+              }
+              else if (value > key){
+                high = mid - 1;
+              }
+              else {
+                return mid;
+              }
             }
+
+            return -1;
           }
           """
 

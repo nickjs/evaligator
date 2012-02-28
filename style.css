@@ -184,10 +184,10 @@ a:hover, a:focus, a:visited {
 * function popup
 ***********************************/
 .functionPop {
-  background: #272822;
+  background: #3d3d3c;
   color: white;
   font-size: 12px;
-  padding: 10px;
+  padding: 20px;
   z-index: 20;
   -moz-border-radius: 8px;
   -webkit-border-radius: 8px;
@@ -198,6 +198,10 @@ a:hover, a:focus, a:visited {
   left: 700;
 
   display:none;
+}
+
+.functionPop p{
+  color: white;
 }
 
 
