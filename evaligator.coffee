@@ -65,9 +65,9 @@ class SourceCodeParser
     transmogrifyFunction = @["transmogrify#{node.name}"]
     if transmogrifyFunction then transmogrifyFunction.call(@, node) else true
 
-  assignValue: (lineNumber, identifier) ->
+  assignValue: (lineNumber, identifier, displayLineNumber) ->
     key = if @BLOCK_MODE_GO then 'iterationAssignment' else 'variableAssignment'
-    @transmogrifier[key](lineNumber, identifier)
+    @transmogrifier[key](arguments...)
 
   ###########################################
   #### Node specific tranmogrifying
@@ -127,9 +127,7 @@ class SourceCodeParser
   # what follows is mega gross because for loops are complicated
   transmogrifyForStatement: (node) ->
     # we're looking either in the first  or second ; chunk of the for loop
-    firstExpressionNodes = @getAllNodesOfType(node, "ForFirstExpression")
-
-    if firstExpressionNodes
+    if firstExpressionNodes = @getAllNodesOfType(node, "ForFirstExpression")
       # this can have either VariableDeclarationNoIn nodes, or ExpressionNoIn nodes
       # because the grammar is retarded these will have multiple identifiers (like in a = b)
       # so for each of those *NoIn nodes, we only care about the first identifier
@@ -142,12 +140,21 @@ class SourceCodeParser
 
     @transmogrifier.loopDeclaration node.lineNumber
     @BLOCK_MODE_GO = true
-    for identifierName in identifierNames || []
-      @assignValue node.lineNumber, identifierName
-    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
 
-    blockNode = @getAllNodesOfType(node, "Block")?[0]
-    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
+    if blockNode = @getAllNodesOfType(node, "Block")?[0]
+      blockSource = blockNode.source
+      blockLocation = blockNode.range.location
+      if needsBlockifying = blockSource.substr(blockLocation, blockNode.range.length).indexOf('\n') is -1
+        @transmogrifier.psuedoBlockifyStart blockNode.lineNumber, node.range.location, blockSource
+
+      for identifierName in identifierNames || []
+        @assignValue node.lineNumber, identifierName, node.lineNumber
+
+      @transmogrifier.bubbleWrapThisLoop blockNode.lineNumber # prevent infinite loops if needed
+      @recursivelyTransmogrifyAllTheThings blockNode if blockNode
+
+      if needsBlockifying
+        @transmogrifier.psuedoBlockifyEnd blockNode.lineNumber
 
     @BLOCK_MODE_GO = false
 
@@ -329,7 +336,15 @@ class SourceTransmogrifier
       new Function("__VARIABLE_MAP__", "__FUNCTION_MAP__", compiledSource)(@variableMap, @functionMap)
       winningVariableMap = @variableMap
 
-  variableAssignment: (lineNumber, variableName) ->
+  psuedoBlockifyStart: (lineNumber) ->
+    index = @source[lineNumber].indexOf('{')
+    console.log index
+    @source[lineNumber] = "#{@source[lineNumber].substr(0, index - 1)}\n{/* AUTO BRACKET */#{@source[lineNumber].substr(index)}\n"
+
+  psuedoBlockifyEnd: (lineNumber) ->
+    @source[lineNumber] += "\n/* END AUTO BRACKET */}"
+
+  variableAssignment: (lineNumber, variableName, displayLineNumber=lineNumber) ->
     @source[lineNumber] += ";\n__VARIABLE_MAP__.assignValue(#{lineNumber},'#{variableName}',#{variableName});"
 
   loopDeclaration: (lineNumber) ->
@@ -342,8 +357,8 @@ class SourceTransmogrifier
       @source[lineNumber] += "if (++(__INF_LOOP_BUBBLE_WRAP__[#{@numLoopsWrapped}]) > #{maxProtectedIterations}){ break; }"
       ++@numLoopsWrapped  # we've protected this loop, ready for the next one!
 
-  iterationAssignment: (lineNumber, variableName) ->
-    @source[lineNumber] += ";\n__VARIABLE_MAP__.iterateValue(#{lineNumber},'#{variableName}',#{variableName});"
+  iterationAssignment: (lineNumber, variableName, displayLineNumber=lineNumber) ->
+    @source[lineNumber] += ";\n__VARIABLE_MAP__.iterateValue(#{displayLineNumber},'#{variableName}',#{variableName});"
 
   functionDeclaration: (lineNumber) ->
     line = @source[lineNumber]
