@@ -130,6 +130,7 @@ p{
   display:none; 
   width: 149px;
   background:#e3e3e3;
+  z-index: 20;
 
   /* rounded corners */
   -webkit-border-radius: 6px;  
@@ -138,10 +139,14 @@ p{
 
 }
 
+#nav a{
+  position:relative;
+  z-index: 20;
+}
+
 #nav ul li{     /* sublinks are a wee smaller */
   font-size: 16px;
   padding-bottom: 4px;
-  
 }
 
 #nav li:hover ul{ /* show drowpdown on hover */
