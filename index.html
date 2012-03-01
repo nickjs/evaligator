@@ -10,7 +10,7 @@
     <div class="pageTitle"><b>evaligator</b>.js</div>
       <ul id="nav">
         <li><a href="#">load an example</a>
-          <ul>
+          <ul id="subnav">
             <li><a href="#" onClick="Editor.loadExample('variables');">variables</a></li>
             <li><a href="#" onClick="Editor.loadExample('loops');">loops</a></li>
             <li><a href="#" onClick="Editor.loadExample('functions');">functions</a></li>
@@ -35,25 +35,18 @@
 
     <p>To get things going, start typing some code in the right editor below. Or load one of the examples. And then feed the evaligator.</p>
 
-    <h1>Ok, you play with it:</h1>
+
+    <p>Now, the important bits: slipshoddily assembled by <a href="http://twitter.com/nciagra">nick</a> and <a href="http://dinculescu.com">monica</a>, and lovingly stolen from all the worried dreams of <a href="http://worrydream.com">bret victor</a></p>
+
+    <h1>Now, you play with it:</h1>
   </div>
 
   <div id="editor"></div>
 
   <div id="parameter-debug-input" style="display:hidden"></div>
 
-
-  <div class="textChunk">
-    <h1>Now, the important bits</h1>
-    <p>slapshoddily assembled by <a href="http://twitter.com/nciagra">nick</a> and <a href="http://dinculescu.com">monica</a></p>
-    <p>lovingly stolen from all the worried dreams of <a href="http://worrydream.com">bret victor</a></p>
-    <p>begrudgingly using language.js from <a href="http://github.com/tolmasky">francisco tolmasky</a></p>
-  </div>
-
-
  <div id="transmogrifier-debug-output" style="background-color:#fff;font-family:Menlo"></div>
 
-  </style>
   <!-- <div id="visualismifier"></div> -->
   <script src="ace/ace.js" type="text/javascript"></script>
   <script src="ace/theme-monokai-uncompressed.js" type="text/javascript"></script>
@@ -138,7 +131,7 @@
             if (!functionOnThisLine)
               return
 
-            for param in functionOnThisLine
+            for param, i in functionOnThisLine
               outer = document.createElement 'div'
               span = document.createElement 'span'
               span.innerHTML = "#{param.identifier} = "
@@ -153,13 +146,17 @@
               paramElem.style.width = '120px'
               paramElem.style.marginBottom = '10px'
 
+              outer.appendChild paramElem
+
+              if (i == 0)
+                paramElem.focus()
+
               do (param, paramElem) ->
                 paramElem.onkeyup = ->
                   paramCacheOfDoom.push valueArguments = [param.lineNumber, param.identifier, (new Function("try { return #{paramElem.value}; } catch(e) {}"))()]
                   variableMap.assignValue.apply variableMap, valueArguments
                   Editor.refreshViewer()
 
-              outer.appendChild paramElem
 
             
             closeBtn = document.createElement 'input'
