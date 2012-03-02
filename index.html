@@ -172,8 +172,8 @@
             container.appendChild closeBtn
 
             container.style.display = 'block'
-            container.style.left = e.pageX - container.clientWidth + 10
-            container.style.top  = e.pageY - container.clientHeight / 2
+            container.style.left = e.pageX - container.offsetWidth + 10
+            container.style.top  = e.pageY - container.offsetHeight / 2
 
             firstTextbox.focus()
             firstTextbox.select()
