@@ -3,6 +3,7 @@
   <title>Evaligator</title>
   <link rel="stylesheet" type="text/css" href="style.css" title="default">
   <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'>
 </head>
 <body>
   <div class="header">
@@ -112,8 +113,9 @@
             container = document.getElementById('functionInput')
             container.innerHTML = ''
             
-            elem = document.createElement 'p'
-            elem.innerHTML = "<b>Function parameters:<br/></b>"
+            elem = document.createElement 'div'
+            elem.innerHTML = "Function parameters:"
+            elem.className = 'functionPopTitle'
             container.appendChild elem
 
             # find the particular function where one param is on this line
@@ -128,28 +130,27 @@
                 functionOnThisLine = theFunction
                 break;
 
+            firstTextbox = null # remember it so that you can focus it after displaying the popup
             if (!functionOnThisLine)
               return
 
             for param, i in functionOnThisLine
-              outer = document.createElement 'div'
+              outer = document.createElement 'p'
               span = document.createElement 'span'
-              span.innerHTML = "#{param.identifier} = "
+              span.innerHTML = "#{param.identifier}: "
 
               outer.appendChild span
-              elem.appendChild outer
+              container.appendChild outer
 
               paramElem = document.createElement 'input'
+              paramElem.className = 'functionPopInput'
               paramElem.placeholder = param.identifier
               paramElem.value = param.value
-              paramElem.style.fontSize = '10px'
-              paramElem.style.width = '120px'
-              paramElem.style.marginBottom = '10px'
 
               outer.appendChild paramElem
 
               if (i == 0)
-                paramElem.focus()
+                firstTextbox = paramElem
 
               do (param, paramElem) ->
                 paramElem.onkeyup = ->
@@ -162,16 +163,19 @@
             closeBtn = document.createElement 'input'
             closeBtn.value = 'Close'
             closeBtn.type = 'button'
+            closeBtn.className = 'functionPopBtn'
+
             closeBtn.addEventListener 'click', =>
               container.style.display = 'none'
 
             container.appendChild closeBtn
-            closeBtn.style.marginTop = '10px'
 
             container.style.display = 'block'
             container.style.left = e.pageX - container.clientWidth + 10
             container.style.top  = e.pageY - container.clientHeight / 2
 
+            firstTextbox.focus()
+            firstTextbox.select()
 
 
         window.addEventListener 'resize', =>
