@@ -175,6 +175,32 @@ test "while ALL the things, part 2", ->
     monkey.transmogrifier.run()
     equal monkey.displayValue().trim(), longResult
 
+test "the only do-while loops i will ever write, part 1", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var i=0;
+  do {
+    i++;
+  }
+  while (i <= 5);
+
+  i
+  """
+  longResult = """
+  i = 0
+  i = 0 | 1 | 2 | 3 | 4 | 5
+  i = 1 | 2 | 3 | 4 | 5 | 6
+
+
+
+  i = 6
+  """
+  
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
+
 ###########################################
 #### infinite loops
 ###########################################
@@ -318,7 +344,212 @@ test "nested infinite loops!!, part 1", ->
     monkey.transmogrifier.run()
     equal monkey.displayValue().trim(), longResult
 
-  
+
+
+###########################################
+#### brackets
+###########################################
+test "for brackets, part 1", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var array = [1,3,'4'];
+  var b = 0;
+  for (var i = 0, count = array.length; i < count; i++) {
+      b = array[i] + "!";
+  }
+  """
+  returnString = """
+  array = [1, 3, '4']
+  b = 0
+  i = 0 | 1 | 2 ; count = 3 | 3 | 3
+  b = '1!' | '3!' | '4!'
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), returnString
+
+test "for brackets, part 2", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var array = [1,3,'4'];
+  var b = 0;
+  for (var i = 0, count = array.length; i < count; i++) 
+  {
+      b = array[i] + "!";
+  }
+  """
+  returnString = """
+  array = [1, 3, '4']
+  b = 0
+  i = 0 | 1 | 2 ; count = 3 | 3 | 3
+  b = '1!' | '3!' | '4!'
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), returnString
+
+test "for brackets, part 3", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var array = [1,3,'4'];
+  var b = 0;
+  for (var i = 0, count = array.length; i < count; i++) 
+    b = array[i] + "!";
+  """
+  returnString = """
+  array = [1, 3, '4']
+  b = 0
+  i = 0 | 1 | 2 ; count = 3 | 3 | 3
+  b = '1!' | '3!' | '4!'
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), returnString
+
+test "if brackets, part 1", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var a = 5, b;
+
+  if ( a == 2){
+      b = 'two';
+  }
+  else {
+      b = 'not two';
+  }
+  """
+  returnString = """
+  a = 5 ; b = undefined
+
+
+
+
+
+  b = 'not two'
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), returnString
+
+test "if brackets, part 2", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var a = 5, b;
+
+  if ( a == 2)
+  {
+      b = 'two';
+  }
+  else 
+  {
+      b = 'not two';
+  }
+  """
+  returnString = """
+  a = 5 ; b = undefined
+
+
+
+
+
+
+
+  b = 'not two'
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), returnString
+
+test "if brackets, part 3", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var a = 5, b;
+
+  if (a == 2)
+      b = 'two';
+  else 
+      b = 'not two';
+  """
+  returnString = """
+  a = 5 ; b = undefined
+
+
+
+
+  b = 'not two'
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), returnString
+
+test "while brackets, part 1", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var i = 0;
+  while (i < 5){
+      i++;
+  }
+  i;
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  longResult = """
+  i = 0
+  i = 0 | 1 | 2 | 3 | 4
+  i = 1 | 2 | 3 | 4 | 5
+
+  i = 5
+  """
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
+
+test "while brackets, part 2", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var i = 0;
+  while (i < 5)
+  {
+      i++;
+  }
+  i;
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  longResult = """
+  i = 0
+  i = 0 | 1 | 2 | 3 | 4
+
+  i = 1 | 2 | 3 | 4 | 5
+
+  i = 5
+  """
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
+
+test "while brackets, part 3", ->
+  monkey = new SourceCodeParser
+  longCodeString = """
+  var i = 0;
+  while (i < 5)
+      i++;
+  i;
+  """
+  allIsGood = monkey.parseThemSourceCodes(longCodeString)
+  longResult = """
+  i = 0
+  i = 0 | 1 | 2 | 3 | 4
+  i = 1 | 2 | 3 | 4 | 5
+  i = 5
+  """
+  if(allIsGood)
+    monkey.transmogrifier.run()
+    equal monkey.displayValue().trim(), longResult
 
 
 ###########################################
