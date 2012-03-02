@@ -248,7 +248,7 @@ a:link, a:visited {
   padding: 3px;
   text-decoration: none;
 }
-a:hover, a:focus, a:visited {
+a:hover {
   background-color: #e9e9e9;
   padding: 3px;
   
