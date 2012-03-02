@@ -121,7 +121,7 @@ p{
   font-size: 24px;
 }
 
-#nav li a, #nav li a:visited{
+#nav li a:link, #nav li a:visited{
   display:block;
   text-decoration: none;
   color: #272822;
@@ -133,7 +133,6 @@ p{
 }
 
 #nav li a:hover{
-  background-color: #F8F8F8;
   margin: 3px;
   padding: 6px 8px 6px 8px;
 
@@ -147,7 +146,6 @@ p{
   -webkit-box-shadow: rgb(128, 128, 128) 0px 1px 2px 0px;
   -moz-box-shadow: rgb(128, 128, 128) 0px 1px 2px 0px;
   box-shadow: rgb(128, 128, 128) 0px 1px 2px 0px;
-
 
   z-index: 20;
 }
@@ -210,7 +208,6 @@ p{
 #subnav li a:link, #subnav li a:visited{
   position:relative;
   color: #3a3a3a;
-  background-color: transparent;
   cursor: pointer;
  
   /* no shadow */
