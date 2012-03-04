@@ -57,6 +57,10 @@
   <script src="evaligator.coffee" type="text/coffeescript"></script>
 
   <script type="text/coffeescript">
+    hashOptions = window.location.hash.replace('#','').toLowerCase().split(',')
+    if window.DEBUG_THE_EVALIGATOR = hashOptions.indexOf('debug') isnt -1
+      document.getElementById('parameter-debug-input').style.display = 'block'
+
     paramCacheOfDoom = []
     window.ASK_ME_FOR_ALL_MY_PARAMETERS = (me) ->
       currentViewerAnnotations = []
@@ -200,7 +204,6 @@
 
         @viewer.getSession().on 'change', (e)=>
 
-
       goFullscreenGo: ->
         document.body.appendChild @node
         @split.resize()
@@ -209,11 +212,12 @@
         @codeParser.transmogrifier.run()
         @viewer.getSession().setValue @codeParser.displayValue()
 
-
       loadExample: (whichExample) ->
         # initialize the editor with some random stuff
         require('ace/lib/net').get "examples/#{whichExample}.js", (result) =>
           @editor.getSession().setValue result
+
+    window.Editor = new EditorView document.getElementById('editor')
 
     for link in document.querySelectorAll('[href="#"]')
       link.addEventListener 'click', (e) ->
@@ -226,7 +230,10 @@
     document.getElementById('fullscreen-link').addEventListener 'click', ->
       Editor.goFullscreenGo()
 
-    window.Editor = new EditorView document.getElementById('editor')
+    if hashOptions.indexOf('fullscreen') isnt -1
+      setTimeout ->
+        Editor.goFullscreenGo()
+      , 0
 </script>
 
 </body>
