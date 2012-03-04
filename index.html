@@ -13,13 +13,13 @@
       <ul id="nav">
         <li><a href="#">load an example</a>
           <ul id="subnav">
-            <li><a href="#" onClick="Editor.loadExample('variables');">variables</a></li>
-            <li><a href="#" onClick="Editor.loadExample('loops');">loops</a></li>
-            <li><a href="#" onClick="Editor.loadExample('functions');">functions</a></li>
-            <li><a href="#" onClick="Editor.loadExample('binarySearch');">binary search</a></li>
+            <li><a href="#" class="example-link">variables</a></li>
+            <li><a href="#" class="example-link">loops</a></li>
+            <li><a href="#" class="example-link">functions</a></li>
+            <li><a href="#" class="example-link">binary search</a></li>
           </ul>
         </li>
-        <li><a href="fullscreen.html" target="_blank">fullscreen</a></li>
+        <li><a href="#" id="fullscreen-link">fullscreen</a></li>
     </ul>
   </div>
 
@@ -113,7 +113,7 @@
 
             container = document.getElementById('functionInput')
             container.innerHTML = ''
-            
+
             elem = document.createElement 'div'
             elem.innerHTML = "Function parameters:"
             elem.className = 'functionPopTitle'
@@ -160,7 +160,7 @@
                   Editor.refreshViewer()
 
 
-            
+
             closeBtn = document.createElement 'input'
             closeBtn.value = 'Close'
             closeBtn.type = 'button'
@@ -179,7 +179,7 @@
             else if (e.clientX || e.clientY)
               posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft
               posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop
-            
+
             container.style.display = 'block'
             container.style.left = posx - container.offsetWidth + 10
             container.style.top  = posy - container.offsetHeight / 2
@@ -201,8 +201,7 @@
         @viewer.getSession().on 'change', (e)=>
 
 
-
-      refreshViewer: () ->
+      refreshViewer: ->
         @codeParser.transmogrifier.run()
         @viewer.getSession().setValue @codeParser.displayValue()
 
@@ -253,17 +252,17 @@
 
           var f = function(inputValueOne, inputValueTwo) {
             var a = x + y;
-          } 
+          }
 
           var g = function(x,y) {
             var a = x + y;
             return a;
-          } 
+          }
 
           var b = g(3,7);
           """
 
-          binarySearch: """
+          binary_search: """
           // hint: click on the annotation on line 4, and set:
           // key = 'b'
           // array = ['a', 'b', 'c', 'd', 'e', 'f']
@@ -271,7 +270,7 @@
           var binarySearch = function(key, array) {
             var low = 0;
             var high = array.length - 1;
-            
+
             while (low <= high) {
               var mid = floor((low + high)/2);
               var value = array[mid];
@@ -292,6 +291,17 @@
           """
 
         @editor.getSession().setValue examples[whichExample]
+
+    for link in document.querySelectorAll('[href="#"]')
+      link.addEventListener 'click', (e) ->
+        e.preventDefault()
+
+    for link in document.getElementsByClassName('example-link')
+      link.addEventListener 'click', (e) ->
+        Editor.loadExample e.target.innerText.replace(/\s/, '_')
+
+    document.getElementById('fullscreen-link').addEventListener 'click', ->
+      Editor.goFullscreenGo()
 
     window.Editor = new EditorView document.getElementById('editor')
 </script>
