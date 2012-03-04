@@ -210,91 +210,10 @@
         @viewer.getSession().setValue @codeParser.displayValue()
 
 
-
       loadExample: (whichExample) ->
         # initialize the editor with some random stuff
-        examples =
-          variables: """
-            // hint: try adding more elements to the arr array
-            // or changing the bounds of the for loop
-
-            var a = 0;
-            var b = a;
-
-            var arr = ['tuna', 'fish'];
-            var allTheOddThings = '';
-
-            for (var i = 0; i < 2 * arr.length; i++){
-                 b += i;
-                 if (b % 2 != 0){
-                    allTheOddThings += b + ', ';
-                 }
-            }
-          """
-
-          loops: """
-          // hint: try changing the bounds of the for loop
-          // try making them infinite loops :)
-
-          var a = 0;
-            for (var i = 0; i < 30; i++) {
-              a = i;
-            }
-
-            a++;
-
-            var b = 0;
-            while (a < 100) {
-              b++;
-            }
-          """
-
-          functions: """
-          // hint: to test the function input parameters, click on the
-          // annotation on the line number of the function definition
-          // and assign a value to each parameter
-
-          var f = function(inputValueOne, inputValueTwo) {
-            var a = x + y;
-          }
-
-          var g = function(x,y) {
-            var a = x + y;
-            return a;
-          }
-
-          var b = g(3,7);
-          """
-
-          binary_search: """
-          // hint: click on the annotation on line 4, and set:
-          // key = 'b'
-          // array = ['a', 'b', 'c', 'd', 'e', 'f']
-
-          var binarySearch = function(key, array) {
-            var low = 0;
-            var high = array.length - 1;
-
-            while (low <= high) {
-              var mid = floor((low + high)/2);
-              var value = array[mid];
-
-              if (value < key){
-                low = mid + 1;
-              }
-              else if (value > key){
-                high = mid - 1;
-              }
-              else {
-                return mid;
-              }
-            }
-
-            return -1;
-          }
-          """
-
-        @editor.getSession().setValue examples[whichExample]
+        require('ace/lib/net').get "examples/#{whichExample}.js", (result) =>
+          @editor.getSession().setValue result
 
     for link in document.querySelectorAll('[href="#"]')
       link.addEventListener 'click', (e) ->
