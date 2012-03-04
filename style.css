@@ -40,41 +40,36 @@ p{
 /***********************************
 * ace
 ***********************************/
-#editor {
+#magicBoxForCode {
+  position: relative;
   display: block;
   height: 500px;
-  position: relative;
-  background-color: #ddd;
 
   /* shadow */
   -webkit-box-shadow: rgb(79, 79, 79) 0px 0px 25px 0px;
   -moz-box-shadow: rgb(79, 79, 79) 0px 0px 25px 0px;
+  -o-box-shadow: rgb(79, 79, 79) 0px 0px 25px 0px;
   box-shadow: rgb(79, 79, 79) 0px 0px 25px 0px;
 
   /* rounded corners */
   -webkit-border-radius: 6px;
   -moz-border-radius: 6px;
+  -o-border-radius: 6px;
   border-radius: 6px;
 
-  margin-left: 20px !important;
-  margin-right: 20px !important;
-  margin-bottom: 20px !important;
+  margin: 0 20px 20px 20px;
 }
 
-#editorFullScreen {
-  margin-top: 20px;
-  margin-bottom: 20px;
+#editor {
+  position: absolute;
+  display: block;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  display: block;
-  position: relative;
-}
-
-.ace_gutter {
-  background-color: transparent !important;
-}
-.ace_gutter-layer{
-  background-color: transparent !important;
+  margin: 0;
+  padding: 0;
+  z-index: 10000;
 }
 
 /***********************************

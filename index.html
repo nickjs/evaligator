@@ -43,7 +43,7 @@
     <h1>Now, you play with it:</h1>
   </div>
 
-  <div id="editor"></div>
+  <div id="magicBoxForCode"><div id="editor"></div></div>
 
   <div id="parameter-debug-input" style="display:hidden"></div>
 
@@ -83,7 +83,7 @@
       Split = require('ace/split').Split
       Mode = require('ace/mode/javascript').Mode
 
-      constructor: (node) ->
+      constructor: (@node) ->
         @split = new Split node, require('ace/theme/monokai'), 2
 
         workerlessMode = new Mode
@@ -200,6 +200,10 @@
 
         @viewer.getSession().on 'change', (e)=>
 
+
+      goFullscreenGo: ->
+        document.body.appendChild @node
+        @split.resize()
 
       refreshViewer: ->
         @codeParser.transmogrifier.run()
