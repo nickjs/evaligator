@@ -145,7 +145,7 @@ class SourceCodeParser
       blockSource = blockNode.source
       blockLocation = blockNode.range.location
       if needsBlockifying = blockSource.substr(blockLocation, blockNode.range.length).indexOf('\n') is -1
-        @transmogrifier.psuedoBlockifyStart blockNode.lineNumber, node.range.location, blockSource
+        @transmogrifier.pseudoBlockifyStart blockNode.lineNumber, node.range.location, blockSource
 
       for identifierName in identifierNames || []
         @assignValue node.lineNumber, identifierName, node.lineNumber
@@ -154,7 +154,7 @@ class SourceCodeParser
       @recursivelyTransmogrifyAllTheThings blockNode if blockNode
 
       if needsBlockifying
-        @transmogrifier.psuedoBlockifyEnd blockNode.lineNumber
+        @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
 
     @BLOCK_MODE_GO = false
 
@@ -352,12 +352,12 @@ class SourceTransmogrifier
       new Function("__VARIABLE_MAP__", "__FUNCTION_MAP__", compiledSource)(@variableMap, @functionMap)
       winningVariableMap = @variableMap
 
-  psuedoBlockifyStart: (lineNumber) ->
+  pseudoBlockifyStart: (lineNumber) ->
     index = @source[lineNumber].indexOf('{')
     console.log index
     @source[lineNumber] = "#{@source[lineNumber].substr(0, index - 1)}\n{/* AUTO BRACKET */#{@source[lineNumber].substr(index)}\n"
 
-  psuedoBlockifyEnd: (lineNumber) ->
+  pseudoBlockifyEnd: (lineNumber) ->
     @source[lineNumber] += "\n/* END AUTO BRACKET */}"
 
   variableAssignment: (lineNumber, variableName, displayLineNumber=lineNumber) ->
