@@ -12,7 +12,6 @@ class SourceCodeParser
   parseThemSourceCodes: (text, useProtection=true) ->
     @variableMap = new VariableMapper
 
-
     @transmogrifier = new SourceTransmogrifier text, @variableMap, useProtection
     entireSyntaxTree = Parser.Parser.parse text
 
@@ -163,7 +162,7 @@ class SourceCodeParser
     # we only care about the identifiers in the expression
     # and more sepcifically, only about the first identifier in the expression
     expressionNode = @getAllNodesOfType(node, "Expression")
-    identifierNames = @getIdentifierNameFromNode expressionNode[0] if expressionNode?[0]
+    identifierNames = @getIdentifierNamesInWholeStatement expressionNode[0] if expressionNode?[0]
 
     @transmogrifier.loopDeclaration node.lineNumber
 
@@ -177,7 +176,6 @@ class SourceCodeParser
   transmogrifyDoWhileStatement: (node) ->
     # DoWhileStatement = do + Statement(thing in statement) + while + expression(thing in parans)
     # we only care about the that last expression, the first identifier
-    debugger
     expressionNode = @getAllNodesOfType(node, "Expression")
     identifierNames = @getIdentifierNameFromNode expressionNode[0] if expressionNode?[0]
 
