@@ -3,12 +3,12 @@
 // and assign a value to each parameter
 
 var f = function(inputValueOne, inputValueTwo) {
-  var a = x + y;
+  var a = inputValueOne + inputValueTwo;
 };
 
 var g = function(x,y) {
-  var a = x + y;
-  return a;
+  var c = x + y;
+  return c;
 };
 
 var b = g(3,7);
