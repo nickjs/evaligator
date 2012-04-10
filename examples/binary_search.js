@@ -7,7 +7,7 @@ var binarySearch = function(key, array) {
   var high = array.length - 1;
 
   while (low <= high) {
-    var mid = floor((low + high) / 2);
+    var mid = Math.floor((low + high) / 2);
     var value = array[mid];
 
     if (value < key) {
@@ -23,3 +23,7 @@ var binarySearch = function(key, array) {
 
   return -1;
 }
+
+// or uncomment any of these: 
+//var resultFound = binarySearch('b', ['a','b','c','d','e','f']);
+//var resultNotFound = binarySearch('x', ['a','b','c','d','e','f']);
