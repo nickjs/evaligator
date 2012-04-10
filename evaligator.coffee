@@ -123,6 +123,24 @@ class SourceCodeParser
 
     false
 
+  blockifyLoopIfNeededAndTransmogrify: (blockNode, needsBlockifying, identifierNames, lineNumber) ->
+    @BLOCK_MODE_GO = true
+    
+    if needsBlockifying
+      @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
+
+    for identifierName in identifierNames || []
+      @assignValue lineNumber, identifierName, lineNumber
+
+    @transmogrifier.bubbleWrapThisLoop blockNode.lineNumber # prevent infinite loops if needed
+    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
+
+    if needsBlockifying
+      @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
+
+    @BLOCK_MODE_GO = false
+
+
   # what follows is mega gross because for loops are complicated
   transmogrifyForStatement: (node) ->
     # we're looking either in the first  or second ; chunk of the for loop
@@ -138,8 +156,7 @@ class SourceCodeParser
         @getIdentifierNamesInWholeStatement secondExpressionNodes[0] if secondExpressionNodes?[0]
 
     @transmogrifier.loopDeclaration node.lineNumber
-    @BLOCK_MODE_GO = true
-
+   
     # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
     if blockNode = @getAllNodesOfType(node, "Block")?[0]
       needsBlockifying = false || (blockNode.lineNumber != node.lineNumber) # on next line needs bracketing too
@@ -147,22 +164,7 @@ class SourceCodeParser
       blockNode = @getAllNodesOfType(node, "Statement")?[0] # unbracketed
       needsBlockifying = true
 
-    blockSource = blockNode.source
-    blockLocation = blockNode.range.location
-    
-    if needsBlockifying
-      @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
-
-    for identifierName in identifierNames || []
-      @assignValue node.lineNumber, identifierName, node.lineNumber
-
-    @transmogrifier.bubbleWrapThisLoop blockNode.lineNumber # prevent infinite loops if needed
-    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
-
-    if needsBlockifying
-      @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
-
-    @BLOCK_MODE_GO = false
+    @blockifyLoopIfNeededAndTransmogrify(blockNode, needsBlockifying, identifierNames, node.lineNumber)
 
   transmogrifyWhileStatement: (node) ->
     # WhileStatement = Expression(thing in parans) + Statement(thing in statement)
@@ -173,8 +175,6 @@ class SourceCodeParser
 
     @transmogrifier.loopDeclaration node.lineNumber
 
-    @BLOCK_MODE_GO = true
-    # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
     # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
     if blockNode = @getAllNodesOfType(node, "Block")?[0]
       needsBlockifying = false || (blockNode.lineNumber != node.lineNumber) # on next line needs bracketing too
@@ -182,22 +182,7 @@ class SourceCodeParser
       blockNode = @getAllNodesOfType(node, "Statement")?[0] # unbracketed
       needsBlockifying = true
 
-
-    blockSource = blockNode.source
-    blockLocation = blockNode.range.location
-    
-    if needsBlockifying
-      @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
-
-    @assignValue node.lineNumber, identifierNames[0] if expressionNode?[0]
-
-    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
-    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
-
-    if needsBlockifying
-      @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
-
-    @BLOCK_MODE_GO = false
+    @blockifyLoopIfNeededAndTransmogrify(blockNode, needsBlockifying, [identifierNames[0]], node.lineNumber)
 
   transmogrifyDoWhileStatement: (node) ->
     # DoWhileStatement = do + Statement(thing in statement) + while + expression(thing in parans)
@@ -207,8 +192,6 @@ class SourceCodeParser
 
     @transmogrifier.loopDeclaration node.lineNumber
 
-    @BLOCK_MODE_GO = true
-    # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
     # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
     if blockNode = @getAllNodesOfType(node, "Block")?[0]
       needsBlockifying = false || (blockNode.lineNumber != node.lineNumber) # on next line needs bracketing too
@@ -216,22 +199,7 @@ class SourceCodeParser
       blockNode = @getAllNodesOfType(node, "Statement")?[0] # unbracketed
       needsBlockifying = true
 
-
-    blockSource = blockNode.source
-    blockLocation = blockNode.range.location
-    
-    if needsBlockifying
-      @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
-
-    @assignValue node.lineNumber, identifierNames[0] if expressionNode?[0]
-
-    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
-    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
-
-    if needsBlockifying
-      @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
-
-    @BLOCK_MODE_GO = false
+    @blockifyLoopIfNeededAndTransmogrify(blockNode, needsBlockifying, [identifierNames[0]], node.lineNumber)
 
   transmogrifyIfStatement: (node) ->
     if allBlockNodes = @getAllNodesOfType(node, "Block")
@@ -241,15 +209,13 @@ class SourceCodeParser
       needsBlockifying = true
 
     for blockNode in allBlockNodes
-      if (needsBlockifying)
-        blockSource = blockNode.source
-        blockLocation = blockNode.range.location
+      if needsBlockifying
         @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
-        @recursivelyTransmogrifyAllTheThings blockNode
-        @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
-      else
-        @recursivelyTransmogrifyAllTheThings blockNode
 
+      @recursivelyTransmogrifyAllTheThings blockNode if blockNode
+
+      if needsBlockifying
+        @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
 
   ###########################################
   #### SyntaxNode helper functions. Hurrah!
