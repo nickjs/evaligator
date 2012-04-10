@@ -130,7 +130,8 @@ class SourceCodeParser
       @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
 
     for identifierName in identifierNames || []
-      @assignValue lineNumber, identifierName, lineNumber
+      if (identifierName)
+        @assignValue lineNumber, identifierName, lineNumber
 
     @transmogrifier.bubbleWrapThisLoop blockNode.lineNumber # prevent infinite loops if needed
     @recursivelyTransmogrifyAllTheThings blockNode if blockNode
@@ -182,7 +183,7 @@ class SourceCodeParser
       blockNode = @getAllNodesOfType(node, "Statement")?[0] # unbracketed
       needsBlockifying = true
 
-    @blockifyLoopIfNeededAndTransmogrify(blockNode, needsBlockifying, [identifierNames[0]], node.lineNumber)
+    @blockifyLoopIfNeededAndTransmogrify(blockNode, needsBlockifying, [identifierNames[0] if identifierNames], node.lineNumber)
 
   transmogrifyDoWhileStatement: (node) ->
     # DoWhileStatement = do + Statement(thing in statement) + while + expression(thing in parans)
@@ -199,7 +200,7 @@ class SourceCodeParser
       blockNode = @getAllNodesOfType(node, "Statement")?[0] # unbracketed
       needsBlockifying = true
 
-    @blockifyLoopIfNeededAndTransmogrify(blockNode, needsBlockifying, [identifierNames[0]], node.lineNumber)
+    @blockifyLoopIfNeededAndTransmogrify(blockNode, needsBlockifying, [identifierNames[0] if identifierNames], node.lineNumber)
 
   transmogrifyIfStatement: (node) ->
     if allBlockNodes = @getAllNodesOfType(node, "Block")
