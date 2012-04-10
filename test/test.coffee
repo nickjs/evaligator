@@ -383,6 +383,7 @@ test "for brackets, part 2", ->
   array = [1, 3, '4']
   b = 0
   i = 0 | 1 | 2 ; count = 3 | 3 | 3
+  
   b = '1!' | '3!' | '4!'
   """
   allIsGood = monkey.parseThemSourceCodes(longCodeString)

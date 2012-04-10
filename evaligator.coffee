@@ -140,20 +140,27 @@ class SourceCodeParser
     @transmogrifier.loopDeclaration node.lineNumber
     @BLOCK_MODE_GO = true
 
+    # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
     if blockNode = @getAllNodesOfType(node, "Block")?[0]
-      blockSource = blockNode.source
-      blockLocation = blockNode.range.location
-      if needsBlockifying = blockSource.substr(blockLocation, blockNode.range.length).indexOf('\n') is -1
-        @transmogrifier.pseudoBlockifyStart blockNode.lineNumber, node.range.location, blockSource
+      needsBlockifying = false || (blockNode.lineNumber != node.lineNumber) # on next line needs bracketing too
+    else 
+      blockNode = @getAllNodesOfType(node, "Statement")?[0] # unbracketed
+      needsBlockifying = true
 
-      for identifierName in identifierNames || []
-        @assignValue node.lineNumber, identifierName, node.lineNumber
+    blockSource = blockNode.source
+    blockLocation = blockNode.range.location
+    
+    if needsBlockifying
+      @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
 
-      @transmogrifier.bubbleWrapThisLoop blockNode.lineNumber # prevent infinite loops if needed
-      @recursivelyTransmogrifyAllTheThings blockNode if blockNode
+    for identifierName in identifierNames || []
+      @assignValue node.lineNumber, identifierName, node.lineNumber
 
-      if needsBlockifying
-        @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
+    @transmogrifier.bubbleWrapThisLoop blockNode.lineNumber # prevent infinite loops if needed
+    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
+
+    if needsBlockifying
+      @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
 
     @BLOCK_MODE_GO = false
 
@@ -167,10 +174,29 @@ class SourceCodeParser
     @transmogrifier.loopDeclaration node.lineNumber
 
     @BLOCK_MODE_GO = true
-    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
+    # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
+    # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
+    if blockNode = @getAllNodesOfType(node, "Block")?[0]
+      needsBlockifying = false || (blockNode.lineNumber != node.lineNumber) # on next line needs bracketing too
+    else 
+      blockNode = @getAllNodesOfType(node, "Statement")?[0] # unbracketed
+      needsBlockifying = true
+
+
+    blockSource = blockNode.source
+    blockLocation = blockNode.range.location
+    
+    if needsBlockifying
+      @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
+
     @assignValue node.lineNumber, identifierNames[0] if expressionNode?[0]
-    blockNode = @getAllNodesOfType(node, "Block")?[0]
-    @recursivelyTransmogrifyAllTheThings blockNode
+
+    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
+    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
+
+    if needsBlockifying
+      @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
+
     @BLOCK_MODE_GO = false
 
   transmogrifyDoWhileStatement: (node) ->
@@ -182,10 +208,29 @@ class SourceCodeParser
     @transmogrifier.loopDeclaration node.lineNumber
 
     @BLOCK_MODE_GO = true
-    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
+    # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
+    # if we don't have a block (i.e with brackets), then according to the grammar we have a statement
+    if blockNode = @getAllNodesOfType(node, "Block")?[0]
+      needsBlockifying = false || (blockNode.lineNumber != node.lineNumber) # on next line needs bracketing too
+    else 
+      blockNode = @getAllNodesOfType(node, "Statement")?[0] # unbracketed
+      needsBlockifying = true
+
+
+    blockSource = blockNode.source
+    blockLocation = blockNode.range.location
+    
+    if needsBlockifying
+      @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
+
     @assignValue node.lineNumber, identifierNames[0] if expressionNode?[0]
-    blockNode = @getAllNodesOfType(node, "Block")?[0]
-    @recursivelyTransmogrifyAllTheThings blockNode
+
+    @transmogrifier.bubbleWrapThisLoop node.lineNumber # prevent infinite loops if needed
+    @recursivelyTransmogrifyAllTheThings blockNode if blockNode
+
+    if needsBlockifying
+      @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
+
     @BLOCK_MODE_GO = false
 
   transmogrifyIfStatement: (node) ->
@@ -351,10 +396,8 @@ class SourceTransmogrifier
       winningVariableMap = @variableMap
 
   pseudoBlockifyStart: (lineNumber) ->
-    index = @source[lineNumber].indexOf('{')
-    console.log index
-    @source[lineNumber] = "#{@source[lineNumber].substr(0, index - 1)}\n{/* AUTO BRACKET */#{@source[lineNumber].substr(index)}\n"
-
+    @source[lineNumber-1] = "#{@source[lineNumber-1]} {/* AUTO BRACKET */\n"
+     
   pseudoBlockifyEnd: (lineNumber) ->
     @source[lineNumber] += "\n/* END AUTO BRACKET */}"
 
@@ -368,7 +411,7 @@ class SourceTransmogrifier
 
   bubbleWrapThisLoop: (lineNumber) ->
     if @useProtection
-      @source[lineNumber] += "if (++(__INF_LOOP_BUBBLE_WRAP__[#{@numLoopsWrapped}]) > #{maxProtectedIterations}){ break; }"
+      @source[lineNumber] += ";if (++(__INF_LOOP_BUBBLE_WRAP__[#{@numLoopsWrapped}]) > #{maxProtectedIterations}){ break; }"
       ++@numLoopsWrapped  # we've protected this loop, ready for the next one!
 
   iterationAssignment: (lineNumber, variableName, displayLineNumber=lineNumber) ->
