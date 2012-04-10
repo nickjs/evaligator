@@ -234,9 +234,21 @@ class SourceCodeParser
     @BLOCK_MODE_GO = false
 
   transmogrifyIfStatement: (node) ->
-    for blockNode in @getAllNodesOfType(node, "Block")
-      @recursivelyTransmogrifyAllTheThings blockNode
-    false
+    if allBlockNodes = @getAllNodesOfType(node, "Block")
+      needsBlockifying = false
+    else 
+      allBlockNodes = @getAllNodesOfType(node, "Statement") # unbracketed
+      needsBlockifying = true
+
+    for blockNode in allBlockNodes
+      if (needsBlockifying)
+        blockSource = blockNode.source
+        blockLocation = blockNode.range.location
+        @transmogrifier.pseudoBlockifyStart blockNode.lineNumber
+        @recursivelyTransmogrifyAllTheThings blockNode
+        @transmogrifier.pseudoBlockifyEnd blockNode.lineNumber
+      else
+        @recursivelyTransmogrifyAllTheThings blockNode
 
 
   ###########################################
