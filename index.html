@@ -231,7 +231,8 @@
 
     for link in document.getElementsByClassName('example-link')
       $listen link, 'click', (e) ->
-        Editor.loadExample e.target.innerText.replace(/\s/, '_')
+        console.log(e, e.target);
+        Editor.loadExample (e.target.textContent || e.target.innerText)?.replace(/\s/, '_')
 
     $listen document.getElementById('fullscreen-link'), 'click', ->
       Editor.goFullscreenGo()
