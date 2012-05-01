@@ -81,6 +81,12 @@
         for valueArguments in paramCacheOfDoom
           me.assignValueIfIdentifierExists.apply me, valueArguments
 
+    $listen = (target, name, callback) ->
+      if target.addEventListener
+        target.addEventListener name, callback, false
+      else
+        target.attachEvent "on#{name}", callback
+
     class EditorView
       EditSession = require('ace/edit_session').EditSession
       UndoManager = require('ace/undomanager').UndoManager
@@ -108,7 +114,7 @@
         @codeParser = new SourceCodeParser
 
 
-        window.addEventListener 'mouseup', (e) ->
+        $listen window, 'mouseup', (e) ->
           if e.target.title is 'Function definition'
             e.stopPropagation()
 
@@ -170,7 +176,7 @@
             closeBtn.type = 'button'
             closeBtn.className = 'functionPopBtn'
 
-            closeBtn.addEventListener 'click', =>
+            $listen closeBtn, 'click', =>
               container.style.display = 'none'
 
             container.appendChild closeBtn
@@ -192,7 +198,7 @@
             firstTextbox.select()
 
 
-        window.addEventListener 'resize', =>
+        $listen window, 'resize', =>
           @split.resize()
 
         @editor.getSession().on 'change', =>
@@ -220,14 +226,14 @@
     window.Editor = new EditorView document.getElementById('editor')
 
     for link in document.querySelectorAll('[href="#"]')
-      link.addEventListener 'click', (e) ->
+      $listen link, 'click', (e) ->
         e.preventDefault()
 
     for link in document.getElementsByClassName('example-link')
-      link.addEventListener 'click', (e) ->
+      $listen link, 'click', (e) ->
         Editor.loadExample e.target.innerText.replace(/\s/, '_')
 
-    document.getElementById('fullscreen-link').addEventListener 'click', ->
+    $listen document.getElementById('fullscreen-link'), 'click', ->
       Editor.goFullscreenGo()
 
     if hashOptions.indexOf('fullscreen') isnt -1
